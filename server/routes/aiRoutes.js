@@ -8,6 +8,7 @@ import {
   handleAiAnalyzeListing,
   handleAiReset,
   handleAiStatus,
+  handleAiConfigureKey,
 } from '../controllers/aiController.js';
 
 const router = express.Router();
@@ -32,6 +33,7 @@ router.post('/compare', handleAiCompare);
 router.post('/budget', handleAiBudget);
 router.post('/analyze-listing', handleAiAnalyzeListing);
 router.post('/reset', handleAiReset);
+router.post('/configure-key', handleAiConfigureKey);
 router.get('/status', handleAiStatus);
 
 export default router;
