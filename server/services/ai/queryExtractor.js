@@ -103,16 +103,23 @@ export function detectLanguage(text) {
 export function extractCriteriaDeterministic(text, existingCriteria = {}) {
   const lower = text.toLowerCase();
   const criteria = {
-    transactionType: existingCriteria.transactionType || null,
-    city: existingCriteria.city || null,
-    minPrice: existingCriteria.minPrice || null,
-    maxPrice: existingCriteria.maxPrice || null,
-    propertyType: existingCriteria.propertyType || null,
-    minBedrooms: existingCriteria.minBedrooms || null,
-    minBathrooms: existingCriteria.minBathrooms || null,
-    minGuests: existingCriteria.minGuests || null,
-    amenities: [...(existingCriteria.amenities || [])],
-    sortPreference: existingCriteria.sortPreference || 'best_match',
+    transactionType: null,
+    city: null,
+    minPrice: null,
+    maxPrice: null,
+    propertyType: null,
+    minBedrooms: null,
+    minBathrooms: null,
+    minGuests: null,
+    amenities: [],
+    removeAmenities: [],
+    clearAmenities: false,
+    clearAllFilters: false,
+    clearMaxPrice: false,
+    clearMinPrice: false,
+    clearPropertyType: false,
+    clearCity: false,
+    sortPreference: 'best_match',
     intent: 'search',
     isAmbiguous: false,
     clarificationQuestion: null,
@@ -165,6 +172,21 @@ export function extractCriteriaDeterministic(text, existingCriteria = {}) {
     /^(allo|alo|allo\?|alo\?|wach\s*katsme3ni|fink|rak\s*hna|khedam|tu\s*es\s*l[aà]|are\s*you\s*there)\b/i.test(lower) ||
     /^(ألو|الو|واش كتسمعني|فينك|هل أنت هنا)/.test(text);
 
+  // Change of mind / Reset / Dropping previous search
+  // e.g. "cfy mab9itch baghiha", "mab9itch baghi hadchi", "bdel l-fikra", "annuler"
+  const isChangeOfMind = /\b(?:mab9itch\s*baghiha|mab9itx\s*baghiha|mabghithach|mab9itch\s*baghi\s*hadchi|bdel\s*l-?fikra|beddel\s*l-?fikra|ghiyer|annuler|cancel)\b/i.test(lower);
+  if (isChangeOfMind) {
+    criteria.clearAmenities = true;
+    criteria.clearPropertyType = true;
+  }
+
+  // Negation of Sea view
+  // e.g. "mab9itch baghi dar hdalbhar", "bla b7ar", "machi 3la lbhar", "pas de vue mer"
+  const isNegatingSea = /(?:mab9itch|mab9itx|mabghitch|mab4itch|ma\s*bghitch|ma\s*b4itch|machi|bla|ne\s*veux\s*plus|pas\s*de|sans|no\s*longer\s*want|don['’]?t\s*want|without|لا\s*أريد|لم\s*أعد\s*أريد|بدون)\s+.*?(?:hda|3la)?\s*(?:l-?|el\s*)?(?:b[7h][ae]r|bahr|plage|mer|ocean|beach)/i.test(lower);
+  if (isNegatingSea) {
+    criteria.removeAmenities.push('Vue sur mer');
+  }
+
   // Property types
   // Check if text is an interview request or general phrase where "dar" just means housing in general
   const isCasualDar = isInterviewRequest || isUserCorrection || isPingAllo || /\b(t9dar\s*t3awni|bghit\s*n-?skon|sakan)\b/i.test(lower);
@@ -174,7 +196,7 @@ export function extractCriteriaDeterministic(text, existingCriteria = {}) {
     criteria.propertyType = 'Appartement';
   } else if (/\b(villa|villas)\b/i.test(lower) || /فيلا|فيلات/.test(text)) {
     criteria.propertyType = 'Villa';
-  } else if (!isCasualDar && ((/\b(maison|house)\b/i.test(lower) || /منزل/.test(text) || (/\bdar\b/i.test(lower) && (criteria.city || criteria.maxPrice || criteria.minBedrooms)))) && !/دار\s*البيضاء/.test(text)) {
+  } else if (!isCasualDar && !isChangeOfMind && ((/\b(maison|house)\b/i.test(lower) || /منزل/.test(text) || (/\bdar\b/i.test(lower) && (criteria.city || criteria.maxPrice || criteria.minBedrooms)))) && !/دار\s*البيضاء/.test(text)) {
     criteria.propertyType = 'Maison';
   } else if (/\b(studio|studios)\b/i.test(lower) || /ستوديو|استوديو/.test(text)) {
     criteria.propertyType = 'Studio';
@@ -184,24 +206,58 @@ export function extractCriteriaDeterministic(text, existingCriteria = {}) {
     if (!criteria.propertyType) criteria.propertyType = 'Chambre';
   }
 
-  // Budget / Prices: e.g. "max 2500 dh", "budget 3000", "2500dh", "3000 dirhams", "2500 درهم", "khlli budget 3000"
+  // Budget / Prices:
+  // 1. Min price extraction (must check before generic price number)
+  // e.g. "ktar mn 1000 dh", "ktarmn 500", "kter men 1500", "plus de 1000", "fo9 500", "more than 1000", "min 1000"
+  const minPriceMatch = text.match(
+    /(?:ktar\s*m[ne]|ktarmn|kter\s*m[ne]|ktermn|kber\s*m[ne]|kbermn|fo9\s*m[ne]|fo9mn|foug\s*m[ne]|fougmn|fo9|foug|fawq|aktar\s*m[ne]|ktar\s*3la|kter\s*3la|plus\s*de|plus\s*que|au\s*dessus\s*de|supérieur\s*à|more\s*than|above|over|higher\s*than|at\s*least|min|minimum|أكثر\s*من|فوق|أكبر\s*من|أقل\s*شيء)\s*:?\s*(\d+[\d\s]*)/i
+  );
+  if (minPriceMatch) {
+    const rawMin = minPriceMatch[1].replace(/\s+/g, '');
+    const numMin = parseInt(rawMin, 10);
+    if (!isNaN(numMin) && numMin > 0) {
+      criteria.minPrice = numMin;
+      criteria.clearMaxPrice = true;
+      criteria.sortPreference = 'price_asc';
+    }
+  }
+
+  // 2. Max price extraction
+  // e.g. "9al mn 500", "9almn 500", "rkhass mn 500 dh", "a9al mn 800", "max 2500 dh", "ta7t 500"
   const maxPriceMatch =
-    text.match(/(?:max|maximum|budget|mizaniya|mizaneya|plafon|jusqu['’]?à|under|below|قل من|أقصى|حد أقصى|ميزانية)\s*:?\s*(\d+[\d\s]*)/i) ||
-    text.match(/(\d+)\s*(?:dh|mad|dirham|dirhams|درهم)/i) ||
-    text.match(/(?:khlli\s+budget|update\s+budget|budget)\s*(\d+)/i);
+    text.match(
+      /(?:9al\s*m[ne]|9almn|9el\s*m[ne]|9elmn|a9al\s*m[ne]|a9almn|rkhass\s*m[ne]|rkhassmn|rkhis\s*(?:3la|m[ne])|sgher\s*m[ne]|sghermn|ta7t\s*m[ne]|ta7tmn|ta7t|moins\s*de|inférieur\s*à|sous|less\s*than|under|below|max|maximum|budget|mizaniya|mizaneya|plafon|jusqu['’]?à|أقل\s*من|تحت|أرخص\s*من|أقصى|حد\s*أقصى|ميزانية)\s*:?\s*(\d+[\d\s]*)/i
+    ) ||
+    (!minPriceMatch ? text.match(/(\d+)\s*(?:dh|mad|dirham|dirhams|درهم)/i) : null) ||
+    text.match(/(?:khlli\s+budget|update\s+budget)\s*(\d+)/i);
 
   if (maxPriceMatch) {
     const rawNum = maxPriceMatch[1].replace(/\s+/g, '');
     const num = parseInt(rawNum, 10);
     if (!isNaN(num) && num > 0) {
       criteria.maxPrice = num;
+      if (!minPriceMatch) {
+        criteria.clearMinPrice = true;
+      }
+      if (/(?:9al|9el|a9al|rkhass|rkhis|sgher|ta7t|moins)/i.test(maxPriceMatch[0])) {
+        criteria.sortPreference = 'price_asc';
+      }
     }
   }
 
-  // Min price: "min 1000", "au moins 1000"
-  const minPriceMatch = text.match(/(?:min|minimum|au moins|at least|أقل شيء)\s*:?\s*(\d+)/i);
-  if (minPriceMatch) {
-    criteria.minPrice = parseInt(minPriceMatch[1], 10);
+  // 3. Price sort preference / Cheap ("rkhissa", "rkhis", "pas cher", "cheap", "économique")
+  if (/\b(?:rkhissa|rkhis|rkhess|rkhass|pas\s*cher|cheap|cheapest|économique|bon\s*marché|رخيص|رخيصة|الأرخص)\b/i.test(lower)) {
+    criteria.sortPreference = 'price_asc';
+  }
+
+  // Number of guests / people (e.g. "lchakhss 1", "pour 1 personne", "solo", "2 people")
+  if (/\b(?:l-?chakhss?\s*1|chakhs\s*wahed|pour\s*1\s*personne|pour\s*une\s*personne|for\s*1\s*person|for\s*one\s*person|solo|wahdi|bwa7di|لشخص\s*واحد|فرد\s*واحد)\b/i.test(lower)) {
+    criteria.minGuests = 1;
+  } else {
+    const guestsMatch = lower.match(/(?:pour|for|l)\s*(\d+)\s*(?:personnes?|people|nass|chakhs)\b/i);
+    if (guestsMatch) {
+      criteria.minGuests = parseInt(guestsMatch[1], 10);
+    }
   }
 
   // Bedrooms:
@@ -227,16 +283,33 @@ export function extractCriteriaDeterministic(text, existingCriteria = {}) {
   const amenityMap = [
     { key: 'Balcon', patterns: [/balcon/i, /balcony/i, /بالكون/i, /شرفة/i] },
     { key: 'WiFi', patterns: [/wifi/i, /wi-fi/i, /واي فاي/i, /انترنت/i, /internet/i] },
-    { key: 'Piscine', patterns: [/piscine/i, /pool/i, /swimming pool/i, /مسبح/i] },
+    { key: 'Piscine', patterns: [/piscine/i, /pool/i, /swimming pool/i, /مسبح/i, /\bla\s*piscine\b/i, /\bb\s*piscine\b/i] },
     { key: 'Climatisation', patterns: [/climatisation/i, /clim/i, /ac\b/i, /air condition/i, /مكيف/i, /كليما/i] },
     { key: 'Parking gratuit', patterns: [/parking/i, /garage/i, /باركينغ/i, /كراج/i, /مرآب/i] },
     { key: 'Jardin', patterns: [/jardin/i, /garden/i, /حديقة/i] },
     { key: 'Terrasse', patterns: [/terrasse/i, /terrace/i, /سطح/i, /تراس/i] },
     { key: 'Cuisine équipée', patterns: [/cuisine/i, /kitchen/i, /مطبخ/i, /كوزينة/i] },
-    { key: 'Vue sur mer', patterns: [/vue sur mer/i, /sea view/i, /ocean view/i, /إطلالة على البحر/i] },
+    {
+      key: 'Vue sur mer',
+      patterns: [
+        /vue sur mer/i,
+        /vue mer/i,
+        /sea view/i,
+        /ocean view/i,
+        /front de mer/i,
+        /bord de mer/i,
+        /إطلالة على البحر/i,
+        /\b(hda|3la|9rib\s*l|face|près|vue)?\s*(l-?|el\s*)?(b[7h][ae]r|bahr)\b/i,
+        /\b(mer|plage|beach|ocean|côte|sa7il)\b/i,
+        /بحر|البحر|شاطئ|الشاطئ|ساحل|قرب البحر|على البحر/,
+      ],
+    },
   ];
 
   for (const { key, patterns } of amenityMap) {
+    if (key === 'Vue sur mer' && (isNegatingSea || isChangeOfMind)) {
+      continue;
+    }
     if (patterns.some(p => p.test(text))) {
       if (!criteria.amenities.includes(key)) {
         criteria.amenities.push(key);
@@ -265,9 +338,12 @@ export function extractCriteriaDeterministic(text, existingCriteria = {}) {
     /مباراة|كرة القدم|من فاز|فاز|الرجاء|الوداد/.test(text);
 
   const hasExplicitPropertyNeed =
-    /\b(appartement|studio|villa|chambre|riad|sakan)\b/i.test(lower) ||
-    /\b(bghit|khasni|cherche|chercher|looking\s*for|je\s*veux|i\s*want|i\s*need)\s+(chi\s+)?(dar|appartement|studio|villa|riad|sakan|logement)\b/i.test(lower) ||
-    /شقة|ستوديو|فيلا|غرفة|رياض|عقار|أبحث عن شقة|أريد كراء/.test(text);
+    /\b(appartement|appartements|studio|studios|villa|villas|chambre|chambres|riad|riads|sakan|3aqar|3aqarat|logement|logements)\b/i.test(lower) ||
+    /\b(bghit|b4it|bghitk|b4itk|khasni|bghina|b4ina|3tini|a3tini|ta3tini|werini|warini|jib\s*lia|chouf\s*lia|cherche|chercher|looking\s*for|je\s*veux|i\s*want|i\s*need|find\s*me|kan9elleb|kan9leb)\b.*?\b(dar|dyar|appartement|appartements|studio|studios|villa|villas|riad|riads|sakan|logement|3aqar|3aqarat|blasa)\b/i.test(lower) ||
+    /\b(dyar|dar)\s+(li\s+)?(kaynin|9rab|hda|f)\b/i.test(lower) ||
+    /\b(b4it|b4itk|bghit|bghitk|3tini|ta3tini|a3tini|werini|warini|jib\s*lia)\s+.*?\b(hda|3la)?\s*(l-?|el\s*)?(b[7h][ae]r|bahr|plage|mer|piscine|vue\s*sur\s*mer)\b/i.test(lower) ||
+    /\b(mdina\s+hda\s+(l-?|el\s*)?b[7h][ae]r|hda\s+(l-?|el\s*)?b[7h][ae]r|3la\s+(l-?|el\s*)?b[7h][ae]r|mdina\s+sa7iliya|ville\s+c[oô]ti[eè]re)\b/i.test(lower) ||
+    /شقة|شقق|ستوديو|فيلا|فيلات|غرفة|رياض|عقار|عقارات|أبحث عن|أريد|دور|ديار|قرب البحر|على البحر|مدينة قرب البحر|مدينة ساحلية/.test(text);
 
   // Mixed intent: general question + real estate request in same prompt
   const isGeneralDomain = isProgramming || isMath || isTranslation || isWeather || isSports;
@@ -313,7 +389,10 @@ export function extractCriteriaDeterministic(text, existingCriteria = {}) {
   const hasSpecificSearchCriteria = Boolean(
     criteria.propertyType ||
     criteria.maxPrice ||
+    criteria.minPrice ||
     criteria.minBedrooms ||
+    criteria.minGuests ||
+    criteria.sortPreference === 'price_asc' ||
     criteria.amenities.length > (existingCriteria.amenities?.length || 0) ||
     hasExplicitPropertyNeed
   );
@@ -364,7 +443,7 @@ export function extractCriteriaDeterministic(text, existingCriteria = {}) {
     criteria.intent = 'budget';
   } else if (isRiskCheck) {
     criteria.intent = 'risk_check';
-  } else if (hasSpecificSearchCriteria && (criteria.city || criteria.maxPrice || criteria.minBedrooms)) {
+  } else if (hasSpecificSearchCriteria) {
     criteria.intent = 'search';
   } else if (lower.includes('?') || /\b(wach|chnou|fin|kifach|pourquoi|comment|what|how|where|هل|أين|كيف)\b/i.test(lower)) {
     criteria.intent = 'general_qa';
@@ -382,9 +461,45 @@ export function extractCriteriaDeterministic(text, existingCriteria = {}) {
  * Uses Gemma 4 on Gemini API when available, falls back to deterministic extraction
  */
 export async function extractSearchCriteria(userText, existingCriteria = {}) {
+  // Always run deterministic extraction first
+  const deterministic = extractCriteriaDeterministic(userText, existingCriteria);
+
   // If provider not configured, use robust deterministic parser
   if (!gemmaProvider.getStatus().isConfigured) {
-    return extractCriteriaDeterministic(userText, existingCriteria);
+    return deterministic;
+  }
+
+  // If deterministic detects strong conversational intent, negation, change of mind, or sorting,
+  // use deterministic directly to avoid LLM hallucination and criteria staleness
+  const hasStrongIntent = [
+    'interview_request',
+    'user_correction',
+    'ping_allo',
+    'weather',
+    'programming',
+    'mathematics',
+    'translation',
+    'sports',
+    'greeting',
+    'identity',
+    'chitchat',
+    'mixed',
+  ].includes(deterministic.intent);
+
+  const hasNegationOrReset =
+    deterministic.clearAmenities ||
+    deterministic.clearAllFilters ||
+    deterministic.clearPropertyType ||
+    deterministic.clearCity ||
+    deterministic.clearMaxPrice ||
+    deterministic.clearMinPrice ||
+    (deterministic.removeAmenities && deterministic.removeAmenities.length > 0) ||
+    deterministic.sortPreference === 'price_asc' ||
+    deterministic.minPrice != null ||
+    deterministic.maxPrice != null;
+
+  if (hasStrongIntent || hasNegationOrReset) {
+    return deterministic;
   }
 
   const systemInstruction = `
@@ -440,9 +555,22 @@ Extract the criteria now in strictly valid JSON matching this schema:
 
     // Validate with Zod
     const validated = searchCriteriaSchema.parse(rawResult);
+
+    // Merge deterministic signals if any were missed
+    if (deterministic.removeAmenities?.length > 0) {
+      validated.removeAmenities = deterministic.removeAmenities;
+      validated.amenities = (validated.amenities || []).filter(a => !deterministic.removeAmenities.includes(a));
+    }
+    if (deterministic.clearAmenities) validated.clearAmenities = true;
+    if (deterministic.clearPropertyType) validated.clearPropertyType = true;
+    if (deterministic.clearCity) validated.clearCity = true;
+    if (deterministic.clearMaxPrice) validated.clearMaxPrice = true;
+    if (deterministic.clearMinPrice) validated.clearMinPrice = true;
+    if (deterministic.clearAllFilters) validated.clearAllFilters = true;
+
     return validated;
   } catch (error) {
     console.warn('⚠️ Gemma query extraction failed, using deterministic fallback:', error.message);
-    return extractCriteriaDeterministic(userText, existingCriteria);
+    return deterministic;
   }
 }
