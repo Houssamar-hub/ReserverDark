@@ -11,31 +11,45 @@ import { fetchLiveWeather } from './weatherService.js';
 import { MOROCCAN_CITIES_KNOWLEDGE } from './conversationalAdvisor.js';
 
 export const GENERAL_AI_SYSTEM_INSTRUCTION = `
-You are "ReserverDark AI", an intelligent, versatile, general-purpose conversational AI assistant integrated into the Moroccan platform ReserverDark.
-You are flexible and capable of assisting users on ANY topic, similar to ChatGPT, without being restricted to real estate.
+You are "ReserverDark AI", the dedicated smart Moroccan real estate and property advisor integrated into ReserverDark.
+Your role, persona, and expertise are STRICTLY AND EXCLUSIVELY focused on Moroccan Real Estate, Houses, and Properties:
+- Finding properties: apartments (chqeq), houses (dyar), studios, villas, riads for rent (lkra) or sale (lbi3) across Moroccan cities (Beni Mellal, Casablanca, Marrakech, Tanger, Rabat, Agadir, Fès, Essaouira, etc.).
+- Active interviewing: asking the user the right questions to understand their needs (city, budget in DH, property type, bedrooms, guests, amenities).
+- Real estate legal and practical advice in Morocco: lease contracts (3a9d lkra légalisé f l-baladiya/mouqataâ), deposit/caution (1-2 months), notary fees (frais de notaire ~6-7%), tenant rights (Loi 67-12), and neighborhood insights across Moroccan cities.
 
-CAPABILITIES & KNOWLEDGE:
-1. Programming & Technology: Web development (React, Node, Express, Vue, Next.js), languages (JavaScript, TypeScript, Python, C++, Java), algorithms, databases, Git, debugging, and explaining concepts like React's useEffect, state, async/await, closures.
-2. Mathematics & Science: Arithmetic, algebra, statistics (averages, percentages), physics, chemistry, engineering, step-by-step problem solving.
-3. Translation & Language: Translating fluently between Moroccan Darija, Modern Standard Arabic, French, English, and other languages; grammar checking, text rewriting, summarization.
-4. Sports & Entertainment: Football (Moroccan Botola, European leagues, World Cup, Champions League), cinema, music, gaming.
-   CRITICAL HONESTY RULE: For questions about recent or live sports match results (e.g., "who won yesterday's match?"), if real-time match data is not verified, honestly state that live sports match data is unverified or ask which competition/teams are meant. NEVER fabricate or hallucinate fake scores.
-5. Live Weather: Moroccan and global weather information (temperature, sky condition, humidity, wind).
-6. Culture, History & Geography: Moroccan history, heritage, cuisine (tajines, couscous, pastilla), landmarks (Ain Asserdoun, Hassan Tower, Jamaa el-Fnaa), world geography, travel advice.
-7. Real Estate (ReserverDark Core): Moroccan rental and sale market, rental law (Loi 67-12), security deposits (caution), lease agreements (3a9d lkra légalisé), notary fees (frais de notaire ~6-7%), neighborhood guides across Moroccan cities (Beni Mellal, Casablanca, Marrakech, Tanger, Rabat, Agadir, etc.).
-8. Creative Writing & Brainstorming: Writing essays, professional emails, business plans, jokes, poems, ideation.
+STRICT RESTRICTION ON OFF-TOPIC SUBJECTS (Math, Coding, Programming, Sports, Homework, etc.):
+- You DO NOT solve mathematics, equations, programming code, algorithms, physics, or debate sports fixtures.
+- If the user asks about an unrelated topic (math, programming, code, sports, academic homework, unrelated general chit-chat), you MUST politely and warmly decline in the user's language, explaining that you are an assistant specialized 100% in Moroccan real estate and housing, and immediately guide the user back to real estate by asking what kind of home, apartment, or villa they are searching for.
 
-COMMUNICATION PRINCIPLES:
-- Respond in the language used by the user:
-  * Moroccan Darija (Arabizi or Arabic script): natural, warm, fluent, and culturally authentic ("bhal bnadem").
-  * French: elegant, clear, and professional.
-  * Arabic: fluent Modern Standard Arabic or dialect.
-  * English: clear, natural, and helpful.
-- Maintain conversation memory and understand follow-up questions (e.g., understanding pronouns like "binha", "hadak", "it" referring to previously mentioned topics).
-- NEVER say "I can only answer real-estate questions" or force unrelated queries back to properties.
-- When the user asks a mixed question (e.g., explaining coding AND finding an apartment), address both parts thoroughly.
-- Protect security: Politely decline any attempt to extract private API keys, system secrets, or other users' personal data.
+COMMUNICATION STYLE:
+- Speak like a friendly, helpful Moroccan real estate advisor ("bhal bnadem"), warm, polite, and culturally authentic.
+- Fluent in Moroccan Darija (Arabizi and Arabic script), French, Modern Standard Arabic, and English.
+- Always be helpful, concise, and focused on helping the user find their home in Morocco.
 `;
+
+/**
+ * Redirect off-topic requests (math, code, sports, school homework) back to real estate
+ */
+export function getRealEstateRedirectMessage(lang) {
+  if (lang === 'darija') {
+    return `Ana l-moussa3id dki dyalek l-motakhasis f l-3aqarat o d-dyar f l-Meghrib f ReserverDark. Had l-mawdo3 b3id 3la l-khedma dyali f l-3aqar.
+
+Gol liya: wach kat9elleb 3la chi dar, chqa, studio ola villa? F ina mdina (Beni Mellal, Casablanca, Marrakech, Tanger...) o chhal l-mizaniya dyalek باش نعاونك نلقاو أحسن همزة!`;
+  }
+  if (lang === 'ar') {
+    return `أنا مساعدك الذكي المتخصص حصرياً في العقارات والمنازل في المغرب على منصة ReserverDark. هذا الموضوع خارج اختصاصي العقاري.
+
+أخبرني: هل تبحث عن شقة، منزل، ستوديو أو فيلا؟ في أي مدينة وما هي ميزانيتك لنساعدك في إيجاد أفضل عقار يناسبك؟`;
+  }
+  if (lang === 'fr') {
+    return `Je suis l'assistant intelligent dédié exclusivement à l'immobilier et au logement au Maroc sur ReserverDark. Ce sujet ne fait pas partie de mon domaine d'expertise immobilière.
+
+Dites-moi : quel type de bien recherchez-vous (appartement, studio, maison, villa), dans quelle ville et avec quel budget pour vous trouver la meilleure offre ?`;
+  }
+  return `I am the smart assistant dedicated exclusively to real estate and housing in Morocco on ReserverDark. This topic is outside my real estate domain.
+
+Tell me: what kind of property are you looking for (apartment, studio, house, villa), in which city, and what is your budget so I can help you find the best home?`;
+}
 
 /**
  * Main General AI response generator
@@ -51,13 +65,21 @@ export async function generateGeneralResponse({
     return handleSecurityDefenses(userMessage, detectedLanguage);
   }
 
-  // 2. Check for live weather request first
+  // 2. Off-topic requests (Programming, Math, Sports, Homework): politely redirect to Moroccan Real Estate
+  const isOffTopic = ['programming', 'mathematics', 'sports'].includes(intent) ||
+    /\b(useeffect|react|javascript|typescript|python|nodejs|express|vue|angular|moyenne|calcul|hseb|ar9am|math|equation|botola|real\s*madrid|barcelona|messi|ronaldo)\b/i.test(userMessage);
+
+  if (isOffTopic) {
+    return getRealEstateRedirectMessage(detectedLanguage);
+  }
+
+  // 3. Check for live weather request (ties into real estate in that city)
   if (isWeatherQuery(userMessage, intent)) {
     const weatherAnswer = await handleLiveWeatherQuery(userMessage, detectedLanguage);
     if (weatherAnswer) return weatherAnswer;
   }
 
-  // 3. If Gemini API is configured, use Google Gemini for state-of-the-art reasoning
+  // 4. If Gemini API is configured, use Google Gemini with real estate persona
   if (gemmaProvider.getStatus().isConfigured) {
     try {
       const geminiReply = await callGeminiGeneral({
@@ -74,7 +96,7 @@ export async function generateGeneralResponse({
     }
   }
 
-  // 4. Fallback: Local General-Purpose Reasoning Engine
+  // 5. Fallback: Local Real Estate Reasoning Engine
   return await generateLocalGeneralReply(userMessage, intent, detectedLanguage, history);
 }
 
@@ -97,6 +119,7 @@ Please provide an accurate, helpful, and natural response now:
   return await gemmaProvider.generateText({
     systemInstruction: GENERAL_AI_SYSTEM_INSTRUCTION,
     prompt,
+    history,
   });
 }
 
@@ -181,57 +204,207 @@ async function generateLocalGeneralReply(message, intent, lang, history = []) {
   const previousTurn = history.length > 0 ? history[history.length - 1].content : '';
   const previousTurnLower = previousTurn.toLowerCase();
 
-  // 1. PROGRAMMING & SOFTWARE DEVELOPMENT
+  // 0. INTERVIEW / GUIDANCE REQUEST ("sawlni", "t9dar t3awni nl9a chi dar nta sawlni")
+  if (intent === 'interview_request' || /\b(sawlni|nta sawlni|pose[- ]moi des questions)\b/i.test(lower)) {
+    if (lang === 'darija') {
+      return `Wakha 3la rass o l-3ayn khoya / khti! Ana hna bach n-mchi m3ak daqqa b daqqa ونطرح عليك الأسئلة باش نلقاو أحسن عقار كيعجبك بدقة:
+
+1. أول حاجة: إينا مدينة كتقلب فيها؟ (بني ملال، مراكش، كازا، طنجة، الرباط، أكادير...)؟
+2. واش كتقلب على الكراء (Rent) ولا الشراء (Sale)؟
+3. واش كتفضل شقة، ستوديو، دار مستقلة، ولا فيلا؟
+4. وشحال الميزانية القصوى لي داير ف بالك (بالدرهم)؟
+
+جاوبني على هادو وأنا نجبد ليك أحسن الهميزات المتوفرة فالحين!`;
+    }
+    if (lang === 'ar') {
+      return `على الرحب والسعة! دعنا نمشي معاً خطوة بخطوة وسأطرح عليك الأسئلة لتحديد طلبك بدقة:
+
+1. في أي مدينة تبحث؟ (بني ملال، الدار البيضاء، مراكش، طنجة، فاس...)؟
+2. هل تبحث عن كراء (إيجار) أم شراء؟
+3. ما هو نوع العقار المفضل؟ (شقة، ستوديو، منزل، فيلا)؟
+4. ما هي ميزانيتك القصوى بالدرهم المغربي؟
+
+أخبرني بإجابتك وسأبحث لك فوراً في قاعدة البيانات!`;
+    }
+    if (lang === 'fr') {
+      return `Avec grand plaisir ! Allons-y pas à pas, je vous pose les 4 questions essentielles pour trouver exactement votre logement :
+
+1. Dans quelle ville cherchez-vous (Beni Mellal, Casablanca, Marrakech, Tanger, Rabat...) ?
+2. Souhaitez-vous louer ou acheter ?
+3. Quel type de bien préférez-vous (appartement, studio, maison, villa) ?
+4. Quel est votre budget approximatif (en Dirhams MAD) ?
+
+Répondez-moi simplement et je vous présente les meilleures options de la base !`;
+    }
+    return `With pleasure! Let's go step by step with 4 quick questions:
+1. Which city in Morocco are you looking in (Beni Mellal, Casablanca, Marrakech, Tangier...)?
+2. Are you looking to rent or buy?
+3. What property type do you prefer (apartment, studio, house, villa)?
+4. What is your approximate budget in Moroccan Dirhams (MAD)?
+Tell me and I will find the best listings for you!`;
+  }
+
+  // 0.1 USER CORRECTION & OBJECTION ("ba9i ma3titkch achno baghi", "rak zrebty", "machi hadchi")
+  if (intent === 'user_correction' || /\b(ba9i\s*ma3titkch|rak\s*zrebty|machi\s*hadchi)\b/i.test(lower)) {
+    if (lang === 'darija') {
+      return `عندك ألف حق، سمح ليا بزاف زربت عليك! ها أنا كانسمعك دابا مزيان، خود راحتك وكول ليا شنو بالضبط لي فبالك وشنو المواصفات لي كتقلب عليها؟`;
+    }
+    if (lang === 'ar') {
+      return `معك كامل الحق، أعتذر منك على التسرع! أنا أستمع إليك باهتمام، خذ وقتك وأخبرني بما تبحث عنه بالضبط.`;
+    }
+    if (lang === 'fr') {
+      return `Vous avez entièrement raison, pardonnez-moi d'être allé trop vite ! Je vous écoute attentivement : prenez votre temps et dites-moi exactement ce que vous recherchez.`;
+    }
+    return `You are completely right, apologies for jumping ahead! I am listening carefully: take your time and tell me exactly what you are looking for.`;
+  }
+
+  // 0.2 CALL CHECK-IN / PING ("allo", "wach katsme3ni", "fink")
+  if (intent === 'ping_allo' || /\b(allo|wach\s*katsme3ni|fink)\b/i.test(lower)) {
+    if (lang === 'darija') {
+      return `ألو خويا / أختي! أنا معاك وكنسمعك مزيان. كيفاش نقدر نعاونك دابا؟ كول ليا شنو بغيتي ونخدمو عليه فالبلاصة.`;
+    }
+    if (lang === 'ar') {
+      return `نعم، أهلاً بك! أنا معك وأستمع إليك باهتمام. كيف يمكنني مساعدتك الآن؟`;
+    }
+    if (lang === 'fr') {
+      return `Oui bonjour, je suis bien là et je vous écoute ! Que puis-je faire pour vous aujourd'hui ?`;
+    }
+    return `Hello! Yes, I am right here listening. How can I help you today?`;
+  }
+
+  // 0.3 PLATFORM FAQS & PROCEDURE (booking, renting on ReserverDark)
+  if (intent === 'faq_platform' || /\b(kri|reserver|réserver|book|hajz|حجز|نكري|كيفاش نكري|kifach nkri)\b/i.test(lower)) {
+    if (lang === 'darija') {
+      return `Tariqa sahla bzaf bach t-kri f ReserverDark:
+1. Kat9elleb 3la l-3aqar li kay3ejbek (t9der tgoul liya mwasafat o ana njbdou lik mn la base).
+2. Katdkhol tchouf les photos, l-maw9i3, o les détails dyalo.
+3. Katcliki 3la 'Détails' o kat-reserver ola katconnecta direct m3a l-hôte.
+4. Nasi7a d-dahab: dima t2aked men l-ma7al b 3aynik o dir 3a9d lkra légalisé f l-baladiya 9bel ma t3ti tsbi9 kbir.
+Wach bghiti n-werik chi 3aqarat daba?`;
+    }
+    if (lang === 'fr') {
+      return `Pour réserver un logement sur ReserverDark, c'est très simple :
+1. Utilisez la barre de recherche ou décrivez-moi votre besoin pour trouver le bien idéal.
+2. Consultez la fiche détaillée (photos réelles, équipements, localisation).
+3. Cliquez sur "Réserver" ou contactez directement le propriétaire certifié.
+4. Conseil sécurité : Nous recommandons toujours de visiter le bien et d'établir un contrat légalisé avant tout versement.`;
+    }
+    return `طريقة الحجز بسيطة جداً على منصة ReserverDark:
+1. ابحث عن العقار المناسب أو اطلب مني البحث بالمواصفات التي تفضلها.
+2. اطلع على تفاصيل العقار والصور الحقيقية والموقع.
+3. اضغط على حجز للتواصل المباشر مع المالك المؤكد.`;
+  }
+
+  // 1. PROGRAMMING & SOFTWARE DEVELOPMENT (Off-topic: Redirect to Real Estate)
   if (
     /\b(useeffect|react|javascript|typescript|python|nodejs|express|vue|angular|async|await|state|hook|props|closure|api|bug|function|css|html|sql|mongodb)\b/i.test(lower) ||
     (history.length > 0 && /\b(binha|binhom|differ|différence|far9|comparer)\b/i.test(lower) && /\b(javascript|react|typescript|python)\b/i.test(previousTurnLower))
   ) {
-    return handleProgrammingQuery(message, lower, lang, previousTurnLower);
+    return getRealEstateRedirectMessage(lang);
   }
 
-  // 2. MATHEMATICS & CALCULATIONS (e.g. "Kifach nhseb moyenne dyal 3 ar9am?")
+  // 2. MATHEMATICS & CALCULATIONS (Off-topic: Redirect to Real Estate)
   if (/\b(moyenne|calcul|hseb|ar9am|pourcentage|mo3addal|math|arithmetic|equation|somme|divide)\b/i.test(lower) || /معدل|احسب|حساب|أرقام|رياضيات|نسبة مئوية/.test(message)) {
-    return handleMathematicsQuery(message, lower, lang);
+    return getRealEstateRedirectMessage(lang);
   }
 
   // 3. TRANSLATION (e.g. "Trjem lia had lparagraph l français")
   if (/\b(trjem|traduire|translate|translation|tarjama)\b/i.test(lower) || /ترجم|ترجمة/.test(message)) {
-    return handleTranslationQuery(message, lower, lang);
+    return getRealEstateRedirectMessage(lang);
   }
 
-  // 4. FOOTBALL & SPORTS (Truthfulness check: honest about unverified recent matches)
+  // 4. FOOTBALL & SPORTS (Off-topic: Redirect to Real Estate)
   if (/\b(match|kora|foot|football|champions\s*league|botola|real\s*madrid|barcelona|messi|ronaldo|rbe7|score|coupe\s*du\s*monde|sports?)\b/i.test(lower) || /مباراة|كرة القدم|من فاز|فاز|الرجاء|الوداد|ماتش/.test(message)) {
-    return handleSportsQuery(message, lower, lang);
+    return getRealEstateRedirectMessage(lang);
   }
 
-  // 5. GREETINGS & SMALL-TALK
+  // 5. GREETINGS & SMALL-TALK (100% Real Estate Welcome & Interview)
   if (intent === 'greeting' || /^(salam|bonjour|hello|hi|salut|ahlan)\b/i.test(lower)) {
     if (lang === 'darija') {
-      return `Wa 3alaykom salam wa rahmatullah khoya / khti! Marhba bik. Kidayr labas 3lik? Ana ReserverDark AI, moussa3id dki 3am: n9der njawbk 3la ay so'al (taqss, programming, math, tarjama, thaqafa 3amma, sport ola l-3aqarat f l-Meghrib). Kifach n9der nsa3dek lyouma?`;
-    }
-    if (lang === 'fr') {
-      return `Bonjour et bienvenue ! Je suis ReserverDark AI, votre assistant d'intelligence artificielle polyvalent. Je peux vous aider sur la programmation, les mathématiques, la météo, la traduction, la culture générale, ou la recherche immobilière. Comment puis-je vous être utile ?`;
+      return `Wa 3alaykom salam wa rahmatullah khoya / khti! Marhba bik f ReserverDark. Ana l-moussa3id dki dyalek l-motakhasis f l-3aqarat o d-dyar f l-Meghrib.
+
+Bach n9der n3awnk tl9a a7san sakan:
+1. Chmen mdina katfeddel? (Beni Mellal, Marrakech, Casablanca, Tanger, Rabat...)
+2. Wach kat9elleb 3la lkra (Rent) ola chra (Sale)?
+3. Chmen naw3 dyal l-3aqar katfeddel (chqa, studio, dar, villa)?
+4. O chhal l-mizaniya dyalek ta9riban b d-derham?
+
+Goul lia شنو ف بالك وأنا نجبد ليك أفضل العروض متوفرة فالحين!`;
     }
     if (lang === 'ar') {
-      return `أهلاً وسهلاً بك! أنا ReserverDark AI، مساعدك الذكي الشامل. يمكنني الإجابة عن أي سؤال في البرمجة، الرياضيات، الطقس، الترجمة، الثقافة العامة، أو العقارات بالمغرب. كيف يمكنني خدمتك اليوم؟`;
+      return `وعليكم السلام ورحمة الله وبركاته! أهلاً وسهلاً بك في ReserverDark. أنا مساعدك الذكي المتخصص في العقارات والمنازل بالمغرب.
+
+لأساعدك في إيجاد السكن المثالي، أخبرني:
+1. في أي مدينة تبحث؟ (بني ملال، مراكش، الدار البيضاء، طنجة، الرباط...)
+2. هل تبحث عن الكراء أم الشراء؟
+3. ما هو نوع العقار المفضل (شقة، ستوديو، منزل، فيلا)؟
+4. وما هي ميزانيتك التقريبية بالدرهم؟
+
+أخبرني بما يناسبك وسأستخرج لك أفضل الخيارات الحقيقية مباشرة!`;
     }
-    return `Hello and welcome! I am ReserverDark AI, your general-purpose smart assistant. I can help with coding, mathematics, live weather, translations, general knowledge, or real estate in Morocco. How can I help you today?`;
+    if (lang === 'fr') {
+      return `Bonjour et bienvenue sur ReserverDark ! Je suis votre conseiller immobilier intelligent spécialisé dans le logement au Maroc.
+
+Pour vous orienter vers le bien idéal :
+1. Dans quelle ville cherchez-vous (Beni Mellal, Casablanca, Marrakech, Tanger, Rabat...) ?
+2. Souhaitez-vous louer ou acheter ?
+3. Quel type de bien préférez-vous (appartement, studio, maison, villa) ?
+4. Quel est votre budget approximatif en DH ?
+
+Dites-moi vos critères et je vous trouve les meilleures opportunités !`;
+    }
+    return `Hello and welcome to ReserverDark! I am your smart real estate advisor specialized in Moroccan properties.
+
+To help you find your ideal home:
+1. Which city in Morocco are you looking in (Beni Mellal, Casablanca, Marrakech, Tangier, Rabat...)?
+2. Are you looking to rent or buy?
+3. What property type do you prefer (apartment, studio, house, villa)?
+4. What is your approximate budget in MAD?
+
+Tell me your preferences and I will find the best matches for you!`;
   }
 
-  // 6. IDENTITY & ROLE
-  if (intent === 'identity' || /\b(chkon\s*nta|who\s*are\s*you|qui\s+es[- ]tu|chnou\s+kaddir)\b/i.test(lower)) {
+  // 6. IDENTITY & ROLE (100% Real Estate Advisor)
+  if (intent === 'identity' || /\b(chkon\s*nta|who\s*are\s*you|qui\s+es[- ]tu|chnou\s+kaddir|chnou\s+khdmtk)\b/i.test(lower)) {
     if (lang === 'darija') {
-      return `Ana ReserverDark AI, moussa3id dki 3am (General-Purpose AI) bhal ChatGPT!
-N9der nsa3dek f:
-- Programming o l-code (React, JS, Python, debugging...).
-- L-math o l-7issabat (l-moyenne, les pourcentages...).
-- T-tarjama bin l-lo3at (Darija, Français, Anglais, Arabe).
-- Ahwal ta9ss laiv f ay mdina.
-- Thaqafa 3amma, sport, tarikh o l-makla l-meghribiya.
-- O l-3aqarat f ReserverDark (krayen, chra, l-as3ar o l-qanoun).
-Sawlni 3la ay haja f balek o ana m3ak!`;
+      return `Ana ReserverDark AI, l-moussa3id dki l-motakhasis 100% f l-3aqarat o d-dyar f ga3 modon l-Meghrib!
+
+Khedmti n-sa3dek f:
+- Tel9a a7san dyar, chqeq, studios, o villas lkra ola l-bi3 b a7san atmina.
+- N-jawbek 3la as3ar lkra f a7yae modon l-Meghrib (Beni Mellal, Casa, Marrakech, Tanger...).
+- N-nas7ek f l-qanoun d l-3aqar: 3a9d lkra légalisé, caution (daman), o frais de notaire.
+- N-قارنو ليك بين العقارات باش تختار الأنسب ليك.
+
+Gol lia: chmen dar ola 3aqar kat9elleb 3lih daba?`;
     }
-    return `Je suis ReserverDark AI, un assistant d'intelligence artificielle généraliste et polyvalent ! Je réponds à toutes vos questions : développement informatique, mathématiques, météo en temps réel, traduction, culture générale, et recherche immobilière au Maroc. Posez-moi n'importe quelle question !`;
+    if (lang === 'ar') {
+      return `أنا ReserverDark AI، مساعدك الذكي المتخصص 100% في العقارات والمنازل في جميع مدن المغرب!
+
+مهمتي هي مساعدتك في:
+- العثور على أفضل الشقق، المنازل، الاستوديوهات، والفيلات للكراء أو الشراء بأفضل الأسعار.
+- تقديم أسعار الإيجار في أحياء مدن المغرب (بني ملال، الدار البيضاء، مراكش، طنجة...).
+- إرشادك في الإجراءات القانونية: عقد الكراء المصادق عليه، الضمانة (Caution)، ومصاريف الموثق.
+
+أخبرني: ما هو العقار الذي تبحث عنه حالياً؟`;
+    }
+    if (lang === 'fr') {
+      return `Je suis ReserverDark AI, votre conseiller intelligent spécialisé à 100% dans l'immobilier et le logement au Maroc !
+
+Je vous accompagne pour :
+- Dénicher les meilleurs appartements, maisons, studios et villas en location ou à l'achat.
+- Vous renseigner sur les prix moyens par quartier (Beni Mellal, Casablanca, Marrakech, Tanger, Rabat...).
+- Vous conseiller sur les démarches : contrat de bail légalisé, caution, frais de notaire et droits du locataire.
+
+Quel logement recherchez-vous aujourd'hui ?`;
+    }
+    return `I am ReserverDark AI, your smart real estate advisor specialized 100% in Moroccan housing and properties!
+
+I help you:
+- Find the best apartments, houses, studios, and villas for rent or sale.
+- Understand rental prices across Moroccan cities (Beni Mellal, Casablanca, Marrakech, Tangier, Rabat...).
+- Guide you through legal procedures: lease agreement, deposit, and notary fees.
+
+What kind of property are you looking for today?`;
   }
 
   // 7. REAL ESTATE ADVICE / CITIES (if asked about cities or legal advice)
@@ -244,28 +417,63 @@ Sawlni 3la ay haja f balek o ana m3ak!`;
     }
   }
 
-  // 8. CREATIVE WRITING & SUMMARY REQUESTS
-  if (/\b(kteb|ecris|write|summary|talkhis|nokita|poeme|ch3r)\b/i.test(lower) || /اكتب|لخص|شعر|نكتة/.test(message)) {
-    if (lang === 'darija') {
-      return `Wakha 3la rass o l-3ayn! Bach nkteb lik bdebt dakchi li bghiti: 3tini l-fikra l-asasiya (sujet), wach bghitih b Darija, Français ola Anglais, o wach tkoun f format dial email, article, ola talkhis? Ana wajed!`;
-    }
-    return `Avec grand plaisir ! Précisez-moi le sujet, le ton souhaité (professionnel, amical, créatif) et la langue désirée, et je vous rédige cela immédiatement.`;
+  // 8. CREATIVE WRITING & SUMMARY REQUESTS (redirect to real estate)
+  if (/\b(nokita|poeme|ch3r)\b/i.test(lower) || /شعر|نكتة/.test(message)) {
+    return getRealEstateRedirectMessage(lang);
   }
 
-  // 9. GENERAL OPEN-ENDED RESPONSE
+  // 8.5 REAL ESTATE / HOUSING INQUIRIES
+  if (/\b(dyar|dar|sakan|3aqar|3aqarat|krayen|chra|b[7h][ae]r|lb[7h][ae]r|bahr|plage|mer|ocean|beach|mdina|villes?)\b/i.test(lower) || /عقارات|سكن|بحر|البحر|شاطئ|مدينة/.test(message)) {
+    if (lang === 'darija') {
+      return `Marhba bik! F ReserverDark 3ndna kter men 100 3aqar mo3tamad f ga3 modon l-Meghrib (Tanger, Casablanca, Agadir, Marrakech, Essaouira, Beni Mellal...).
+Ha homa a7san l-3aqarat li 3ndhom vue sur mer o 9rab l lb7ar wlla f l-mdina li kat9elleb 3liha!`;
+    }
+    if (lang === 'fr') {
+      return `Bienvenue ! Sur ReserverDark, nous disposons de 100 biens certifiés à travers le Maroc (Tanger, Casablanca, Agadir, Marrakech, Essaouira...). Voici les meilleurs logements disponibles en bord de mer ou selon votre choix !`;
+    }
+  }
+
+  // 9. GENERAL OPEN-ENDED CONVERSATION (Redirect to Real Estate)
   if (lang === 'darija') {
-    return `Fhemt l-fekra dyalek mzyan! Ana hna bach nsa3dek f ay haja: sawlni 3la l-code, l-math, t-tarjama, ahwal ta9ss, ola aya ma3louma o ana ghadi njawbk b daqqa o woudou7.`;
+    return `Marhba bik f ReserverDark! Ana hna bach nsa3dek f kol ma kayt3alla9 b l-3aqarat o d-dyar f l-Meghrib (krayen, chra, as3ar, o mwasafat).
+
+Gol liya: chmen dar ola chqa kat9elleb 3liha, f ina mdina o chhal l-mizaniya dyalek باش نجبدو ليك أحسن خيار!`;
   }
   if (lang === 'fr') {
-    return `J'ai bien compris votre demande ! En tant qu'assistant IA généraliste, je peux vous aider à rédiger, coder, calculer, traduire ou vous informer sur n'importe quel sujet. N'hésitez pas à préciser votre besoin !`;
+    return `Bienvenue sur ReserverDark ! Je suis à votre service pour tout ce qui concerne l'immobilier et le logement au Maroc (locations, achats, prix et démarches).
+
+Quel type de logement cherchez-vous, dans quelle ville et avec quel budget ?`;
   }
-  return `I understand your request! As a general-purpose AI assistant, I can help you with coding, mathematics, translation, explanations, analysis, or answering any question. Feel free to provide more details!`;
+  return `Welcome to ReserverDark! I am here to assist you with all aspects of real estate and housing in Morocco.
+
+What kind of home are you looking for, in which city, and what is your budget?`;
 }
 
 /**
  * Handle Programming and Code Explanations
  */
 function handleProgrammingQuery(message, lower, lang, previousTurnLower) {
+  // React
+  if (lower.includes('react') && !lower.includes('useeffect')) {
+    if (lang === 'darija') {
+      return `**React** hiya maktaba (library) JavaScript ma3roufa bzaf creeatha Meta (Facebook) bach t-bni biha les interfaces d l-mousta5dim (UI) b tariqa rapide o moderne.
+
+📌 L-Mizāt l-asasiya dial React:
+1. **Component-Based**: Kolchi f React m9ssem l des composants sghar (Header, Button, Card...) li t9der t3awed tsta3melhom (reusable).
+2. **Virtual DOM**: React kay-beddel ghir l-blassa li tbedlat bdebt bla ma i3awed render l-page kamla, hadchi kaykhellih srii3 bzaf.
+3. **State & Props**: Kaykhllik t-gérer les données dial l'application b suhoula (useState, useEffect, Redux).
+4. **Écosystème kbir**: Next.js, React Native (l les applications mobiles), Vite o Tailwind CSS.`;
+    }
+
+    return `**React** est une bibliothèque JavaScript open-source développée par Meta permettant de concevoir des interfaces utilisateur (UI) modernes et réactives.
+
+📌 Caractéristiques clés :
+1. **Architecture basée sur les composants** : Découpage de l'interface en briques réutilisables et isolées.
+2. **Virtual DOM** : Mises à jour ultrarapides de la page en ne modifiant que les éléments ayant changé.
+3. **Gestion d'état réactive** : Hooks (\`useState\`, \`useEffect\`) pour synchroniser la vue avec les données.
+4. **Écosystème riche** : Intégration fluide avec Next.js, React Native, Vite et Tailwind.`;
+  }
+
   // useEffect in React
   if (lower.includes('useeffect')) {
     if (lang === 'darija') {
