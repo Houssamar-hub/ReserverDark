@@ -60,8 +60,35 @@ class ConversationMemory {
     const session = this.getOrCreateSession(sessionId);
 
     // Merge logic: preserve existing if new is null/undefined
-    const merged = { ...session.criteria };
+    let merged = { ...session.criteria };
 
+    // 1. Reset all or specific filters if user requested a change of mind / reset
+    if (newCriteria.clearAllFilters) {
+      merged = {
+        transactionType: null,
+        city: null,
+        minPrice: null,
+        maxPrice: null,
+        propertyType: null,
+        minBedrooms: null,
+        minBathrooms: null,
+        minGuests: null,
+        amenities: [],
+        sortPreference: 'best_match',
+      };
+    }
+
+    if (newCriteria.clearAmenities) {
+      merged.amenities = [];
+    }
+    if (newCriteria.clearPropertyType) {
+      merged.propertyType = null;
+    }
+    if (newCriteria.clearCity) {
+      merged.city = null;
+    }
+
+    // 2. Transaction type, city, propertyType
     if (newCriteria.transactionType !== undefined && newCriteria.transactionType !== null) {
       merged.transactionType = newCriteria.transactionType;
     }
@@ -71,12 +98,32 @@ class ConversationMemory {
     if (newCriteria.propertyType) {
       merged.propertyType = newCriteria.propertyType;
     }
+
+    // 3. Budget logic: clear conflicting bounds when user switches from max to min or vice-versa
+    if (newCriteria.clearMaxPrice) {
+      merged.maxPrice = null;
+    }
+    if (newCriteria.clearMinPrice) {
+      merged.minPrice = null;
+    }
+
     if (newCriteria.maxPrice !== undefined && newCriteria.maxPrice !== null) {
       merged.maxPrice = newCriteria.maxPrice;
+      // If previous minPrice is higher than or equal to new maxPrice, clear it to avoid contradictions
+      if (merged.minPrice && merged.minPrice >= merged.maxPrice) {
+        merged.minPrice = null;
+      }
     }
+
     if (newCriteria.minPrice !== undefined && newCriteria.minPrice !== null) {
       merged.minPrice = newCriteria.minPrice;
+      // If previous maxPrice is lower than or equal to new minPrice, clear it to avoid contradictions
+      if (merged.maxPrice && merged.maxPrice <= merged.minPrice) {
+        merged.maxPrice = null;
+      }
     }
+
+    // 4. Rooms and Guests
     if (newCriteria.minBedrooms !== undefined && newCriteria.minBedrooms !== null) {
       merged.minBedrooms = newCriteria.minBedrooms;
     }
@@ -87,10 +134,22 @@ class ConversationMemory {
       merged.minGuests = newCriteria.minGuests;
     }
 
-    // Amenities: set union
-    if (Array.isArray(newCriteria.amenities) && newCriteria.amenities.length > 0) {
+    // 5. Amenities: set union of new amenities (unless cleared), then apply removals
+    if (!newCriteria.clearAmenities && Array.isArray(newCriteria.amenities) && newCriteria.amenities.length > 0) {
       const set = new Set([...merged.amenities, ...newCriteria.amenities]);
       merged.amenities = Array.from(set);
+    }
+    if (Array.isArray(newCriteria.removeAmenities) && newCriteria.removeAmenities.length > 0) {
+      merged.amenities = merged.amenities.filter(a => !newCriteria.removeAmenities.includes(a));
+    }
+
+    // 6. Sort preference (e.g. price_asc for cheap properties or price ascending)
+    if (newCriteria.sortPreference) {
+      merged.sortPreference = newCriteria.sortPreference;
+      // Only clear minPrice if user explicitly searched for cheap ("rkhissa") without providing a minPrice
+      if (newCriteria.sortPreference === 'price_asc' && !newCriteria.minPrice && !merged.minPrice) {
+        merged.minPrice = null;
+      }
     }
 
     session.criteria = merged;
