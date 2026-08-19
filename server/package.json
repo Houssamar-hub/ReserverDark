@@ -9,7 +9,11 @@
     "dev": "nodemon server.js",
     "seed": "node seed/seed.js"
   },
-  "keywords": ["reservation", "booking", "mern"],
+  "keywords": [
+    "reservation",
+    "booking",
+    "mern"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
