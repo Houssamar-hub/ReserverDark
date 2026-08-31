@@ -1,0 +1,134 @@
+{
+  "nav": {
+    "home": "Home",
+    "properties": "Properties",
+    "about": "About",
+    "contact": "Contact",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "dashboard": "Dashboard",
+    "bookings": "Bookings",
+    "favorites": "Favorites",
+    "messages": "Messages",
+    "notifications": "Notifications",
+    "profile": "Profile",
+    "myProperties": "My Properties",
+    "addProperty": "Add Property",
+    "calendar": "Calendar",
+    "revenue": "Revenue",
+    "users": "Users",
+    "owners": "Owners",
+    "reports": "Reports",
+    "settings": "Settings",
+    "reviews": "Reviews"
+  },
+  "home": {
+    "hero": {
+      "title": "Find your ideal home in Morocco",
+      "subtitle": "Apartments, villas, riads — rent with confidence",
+      "search": "Search",
+      "city": "City",
+      "checkin": "Check-in",
+      "checkout": "Check-out",
+      "guests": "Guests",
+      "cityPlaceholder": "Casablanca, Marrakech..."
+    },
+    "featured": "Featured Properties",
+    "stats": {
+      "cities": "Cities",
+      "properties": "Properties",
+      "clients": "Happy Clients"
+    },
+    "howItWorks": "How it works",
+    "steps": {
+      "search": { "title": "Search", "desc": "Find your perfect property" },
+      "book": { "title": "Book", "desc": "Reserve in a few clicks" },
+      "enjoy": { "title": "Enjoy", "desc": "Welcome and relax" }
+    }
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "name": "Full Name",
+    "phone": "Phone",
+    "login": "Sign In",
+    "register": "Sign Up",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "rememberMe": "Remember me",
+    "sendReset": "Send Reset Email",
+    "backToLogin": "Back to Login",
+    "resetSent": "Reset email sent! Check your inbox.",
+    "role": {
+      "client": "Traveler",
+      "owner": "Property Owner"
+    }
+  },
+  "property": {
+    "perNight": "/ night",
+    "bedrooms": "Bedrooms",
+    "bathrooms": "Bathrooms",
+    "guests": "Guests",
+    "amenities": "Amenities",
+    "description": "Description",
+    "location": "Location",
+    "reviews": "Reviews",
+    "book": "Book Now",
+    "available": "Available",
+    "pending": "Pending",
+    "active": "Active",
+    "rejected": "Rejected",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "total": "Total",
+    "nights": "nights"
+  },
+  "booking": {
+    "confirmed": "Confirmed",
+    "pending": "Pending",
+    "cancelled": "Cancelled",
+    "completed": "Completed",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "reject": "Reject"
+  },
+  "common": {
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "noData": "No data found",
+    "search": "Search",
+    "filter": "Filter",
+    "all": "All",
+    "actions": "Actions",
+    "status": "Status",
+    "date": "Date",
+    "price": "Price",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "city": "City",
+    "address": "Address",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "error": "An error occurred",
+    "success": "Success"
+  },
+  "theme": {
+    "light": "Light Mode",
+    "dark": "Dark Mode"
+  },
+  "lang": {
+    "fr": "Français",
+    "en": "English",
+    "ar": "العربية"
+  }
+}

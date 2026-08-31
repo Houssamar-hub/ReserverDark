@@ -1,81 +1,81 @@
-import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Home, 
-  Calendar, 
-  MessageSquare, 
-  Heart, 
-  Users,
-  Building2,
-  CreditCard,
-  Settings,
-  Bell,
-  Star,
-  FileText,
-  LogOut
-} from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import {
+  LayoutDashboard, Home, Calendar, MessageSquare, Heart,
+  Users, Building2, CreditCard, Settings, Bell, Star,
+  FileText, LogOut, PlusSquare, User
+} from 'lucide-react';
 
 const Sidebar = ({ role }) => {
+  const { t } = useTranslation();
   const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => { logout(); navigate('/login'); };
 
   const clientLinks = [
-    { to: '/client', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/client/bookings', icon: Calendar, label: 'Mes réservations' },
-    { to: '/client/favorites', icon: Heart, label: 'Favoris' },
-    { to: '/client/messages', icon: MessageSquare, label: 'Messages' },
-    { to: '/client/notifications', icon: Bell, label: 'Notifications' },
-    { to: '/client/profile', icon: Settings, label: 'Profil' },
+    { to: '/client',               icon: LayoutDashboard, label: t('nav.dashboard') },
+    { to: '/client/bookings',      icon: Calendar,        label: t('nav.bookings') },
+    { to: '/client/favorites',     icon: Heart,           label: t('nav.favorites') },
+    { to: '/client/messages',      icon: MessageSquare,   label: t('nav.messages') },
+    { to: '/client/notifications', icon: Bell,            label: t('nav.notifications') },
+    { to: '/client/profile',       icon: User,            label: t('nav.profile') },
   ];
 
   const ownerLinks = [
-    { to: '/owner', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/owner/properties', icon: Home, label: 'Mes logements' },
-    { to: '/owner/properties/add', icon: Building2, label: 'Ajouter un logement' },
-    { to: '/owner/bookings', icon: Calendar, label: 'Réservations' },
-    { to: '/owner/calendar', icon: Calendar, label: 'Calendrier' },
-    { to: '/owner/revenue', icon: CreditCard, label: 'Revenus' },
-    { to: '/owner/profile', icon: Settings, label: 'Profil' },
+    { to: '/owner',                   icon: LayoutDashboard, label: t('nav.dashboard') },
+    { to: '/owner/properties',        icon: Home,            label: t('nav.myProperties') },
+    { to: '/owner/properties/add',    icon: PlusSquare,      label: t('nav.addProperty') },
+    { to: '/owner/bookings',          icon: Calendar,        label: t('nav.bookings') },
+    { to: '/owner/calendar',          icon: Calendar,        label: t('nav.calendar') },
+    { to: '/owner/revenue',           icon: CreditCard,      label: t('nav.revenue') },
+    { to: '/owner/profile',           icon: User,            label: t('nav.profile') },
   ];
 
   const adminLinks = [
-    { to: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/admin/users', icon: Users, label: 'Utilisateurs' },
-    { to: '/admin/properties', icon: Home, label: 'Logements' },
-    { to: '/admin/bookings', icon: Calendar, label: 'Réservations' },
-    { to: '/admin/reviews', icon: Star, label: 'Avis' },
-    { to: '/admin/reports', icon: FileText, label: 'Rapports' },
-    { to: '/admin/settings', icon: Settings, label: 'Paramètres' },
+    { to: '/admin',            icon: LayoutDashboard, label: t('nav.dashboard') },
+    { to: '/admin/users',      icon: Users,           label: t('nav.users') },
+    { to: '/admin/owners',     icon: Building2,       label: t('nav.owners') },
+    { to: '/admin/properties', icon: Home,            label: t('nav.properties') },
+    { to: '/admin/bookings',   icon: Calendar,        label: t('nav.bookings') },
+    { to: '/admin/reviews',    icon: Star,            label: t('nav.reviews') },
+    { to: '/admin/reports',    icon: FileText,        label: t('nav.reports') },
+    { to: '/admin/settings',   icon: Settings,        label: t('nav.settings') },
   ];
 
   const links = role === 'admin' ? adminLinks : role === 'owner' ? ownerLinks : clientLinks;
 
   return (
-    <div className="fixed left-0 top-16 bottom-0 w-64 bg-dark-200 border-r border-white/10 overflow-y-auto">
-      <div className="p-4 space-y-1">
-        {links.map((link) => (
+    <div className="fixed left-0 top-16 bottom-0 w-64 overflow-y-auto flex flex-col transition-colors duration-200"
+      style={{ backgroundColor: 'var(--bg-primary)', borderRight: '1px solid var(--border)' }}>
+      <div className="p-4 space-y-1 flex-1">
+        {links.map(({ to, icon: Icon, label }) => (
           <NavLink
-            key={link.to}
-            to={link.to}
+            key={to}
+            to={to}
+            end={to === '/client' || to === '/owner' || to === '/admin'}
             className={({ isActive }) =>
-              `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+              `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 isActive
-                  ? 'bg-primary-600/20 text-primary-400'
-                  : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                  : 'hover:bg-gray-100 dark:hover:bg-white/10'
               }`
             }
+            style={({ isActive }) => isActive ? {} : { color: 'var(--text-muted)' }}
           >
-            <link.icon className="w-5 h-5" />
-            <span>{link.label}</span>
+            <Icon className="w-4 h-4 flex-shrink-0" />
+            <span>{label}</span>
           </NavLink>
         ))}
-        
-        <button
-          onClick={logout}
-          className="flex items-center space-x-3 px-4 py-3 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors w-full mt-4"
-        >
-          <LogOut className="w-5 h-5" />
-          <span>Déconnexion</span>
+      </div>
+
+      {/* Logout */}
+      <div className="p-4 border-t" style={{ borderColor: 'var(--border)' }}>
+        <button onClick={handleLogout}
+          className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium w-full transition-all text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10">
+          <LogOut className="w-4 h-4" />
+          <span>{t('nav.logout')}</span>
         </button>
       </div>
     </div>

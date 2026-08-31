@@ -1,0 +1,134 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "properties": "Logements",
+    "about": "À propos",
+    "contact": "Contact",
+    "login": "Connexion",
+    "register": "Inscription",
+    "logout": "Déconnexion",
+    "dashboard": "Tableau de bord",
+    "bookings": "Réservations",
+    "favorites": "Favoris",
+    "messages": "Messages",
+    "notifications": "Notifications",
+    "profile": "Profil",
+    "myProperties": "Mes logements",
+    "addProperty": "Ajouter un logement",
+    "calendar": "Calendrier",
+    "revenue": "Revenus",
+    "users": "Utilisateurs",
+    "owners": "Propriétaires",
+    "reports": "Rapports",
+    "settings": "Paramètres",
+    "reviews": "Avis"
+  },
+  "home": {
+    "hero": {
+      "title": "Trouvez votre logement idéal au Maroc",
+      "subtitle": "Appartements, villas, riads — louez en toute confiance",
+      "search": "Rechercher",
+      "city": "Ville",
+      "checkin": "Arrivée",
+      "checkout": "Départ",
+      "guests": "Voyageurs",
+      "cityPlaceholder": "Casablanca, Marrakech..."
+    },
+    "featured": "Logements en vedette",
+    "stats": {
+      "cities": "Villes",
+      "properties": "Logements",
+      "clients": "Clients satisfaits"
+    },
+    "howItWorks": "Comment ça marche",
+    "steps": {
+      "search": { "title": "Recherchez", "desc": "Trouvez le logement parfait" },
+      "book": { "title": "Réservez", "desc": "Réservez en quelques clics" },
+      "enjoy": { "title": "Profitez", "desc": "Bienvenue et détendez-vous" }
+    }
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "name": "Nom complet",
+    "phone": "Téléphone",
+    "login": "Se connecter",
+    "register": "S'inscrire",
+    "forgotPassword": "Mot de passe oublié ?",
+    "noAccount": "Pas encore de compte ?",
+    "hasAccount": "Déjà un compte ?",
+    "rememberMe": "Se souvenir de moi",
+    "sendReset": "Envoyer l'email de réinitialisation",
+    "backToLogin": "Retour à la connexion",
+    "resetSent": "Email envoyé ! Vérifiez votre boîte mail.",
+    "role": {
+      "client": "Voyageur",
+      "owner": "Propriétaire"
+    }
+  },
+  "property": {
+    "perNight": "/ nuit",
+    "bedrooms": "Chambres",
+    "bathrooms": "Salles de bain",
+    "guests": "Voyageurs",
+    "amenities": "Commodités",
+    "description": "Description",
+    "location": "Localisation",
+    "reviews": "Avis",
+    "book": "Réserver maintenant",
+    "available": "Disponible",
+    "pending": "En attente",
+    "active": "Actif",
+    "rejected": "Rejeté",
+    "checkIn": "Arrivée",
+    "checkOut": "Départ",
+    "total": "Total",
+    "nights": "nuits"
+  },
+  "booking": {
+    "confirmed": "Confirmée",
+    "pending": "En attente",
+    "cancelled": "Annulée",
+    "completed": "Terminée",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "reject": "Rejeter"
+  },
+  "common": {
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "loading": "Chargement...",
+    "noData": "Aucune donnée",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "all": "Tous",
+    "actions": "Actions",
+    "status": "Statut",
+    "date": "Date",
+    "price": "Prix",
+    "name": "Nom",
+    "email": "Email",
+    "phone": "Téléphone",
+    "city": "Ville",
+    "address": "Adresse",
+    "submit": "Soumettre",
+    "back": "Retour",
+    "next": "Suivant",
+    "error": "Une erreur est survenue",
+    "success": "Succès"
+  },
+  "theme": {
+    "light": "Mode clair",
+    "dark": "Mode sombre"
+  },
+  "lang": {
+    "fr": "Français",
+    "en": "English",
+    "ar": "العربية"
+  }
+}

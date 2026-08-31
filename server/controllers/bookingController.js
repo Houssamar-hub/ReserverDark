@@ -88,10 +88,12 @@ export const createBooking = async (req, res) => {
 // @access  Private (Client only)
 export const getMyBookings = async (req, res) => {
   try {
+    const limit = parseInt(req.query.limit) || 0;
     const bookings = await Booking.find({ client: req.user._id })
       .populate('property', 'title images location city')
       .populate('owner', 'name avatar')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .limit(limit);
 
     res.status(200).json({ bookings });
   } catch (error) {

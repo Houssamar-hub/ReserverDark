@@ -4,17 +4,18 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
         dark: {
-          100: '#1a1a2e',
-          200: '#16213e',
-          300: '#0f3460',
-          400: '#533483',
+          100: '#111111',
+          200: '#1a1a1a',
+          300: '#222222',
+          400: '#2a2a2a',
         },
         primary: {
-          50: '#f0f9ff',
+          50:  '#f0f9ff',
           100: '#e0f2fe',
           200: '#bae6fd',
           300: '#7dd3fc',
@@ -25,6 +26,9 @@ export default {
           800: '#075985',
           900: '#0c4a6e',
         },
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
       },
     },
   },

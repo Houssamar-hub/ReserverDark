@@ -1,0 +1,134 @@
+{
+  "nav": {
+    "home": "الرئيسية",
+    "properties": "السكنات",
+    "about": "من نحن",
+    "contact": "اتصل بنا",
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "logout": "تسجيل الخروج",
+    "dashboard": "لوحة التحكم",
+    "bookings": "الحجوزات",
+    "favorites": "المفضلة",
+    "messages": "الرسائل",
+    "notifications": "الإشعارات",
+    "profile": "الملف الشخصي",
+    "myProperties": "سكناتي",
+    "addProperty": "إضافة سكن",
+    "calendar": "التقويم",
+    "revenue": "الإيرادات",
+    "users": "المستخدمون",
+    "owners": "أصحاب العقارات",
+    "reports": "التقارير",
+    "settings": "الإعدادات",
+    "reviews": "التقييمات"
+  },
+  "home": {
+    "hero": {
+      "title": "ابحث عن سكنك المثالي في المغرب",
+      "subtitle": "شقق، فيلات، رياض — احجز بثقة",
+      "search": "بحث",
+      "city": "المدينة",
+      "checkin": "تاريخ الوصول",
+      "checkout": "تاريخ المغادرة",
+      "guests": "الضيوف",
+      "cityPlaceholder": "الدار البيضاء، مراكش..."
+    },
+    "featured": "سكنات مميزة",
+    "stats": {
+      "cities": "مدينة",
+      "properties": "سكن",
+      "clients": "عميل راضٍ"
+    },
+    "howItWorks": "كيف يعمل",
+    "steps": {
+      "search": { "title": "ابحث", "desc": "ابحث عن سكنك المثالي" },
+      "book": { "title": "احجز", "desc": "احجز في بضع نقرات" },
+      "enjoy": { "title": "استمتع", "desc": "مرحباً بك وأرح نفسك" }
+    }
+  },
+  "auth": {
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "name": "الاسم الكامل",
+    "phone": "الهاتف",
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "noAccount": "ليس لديك حساب؟",
+    "hasAccount": "لديك حساب بالفعل؟",
+    "rememberMe": "تذكرني",
+    "sendReset": "إرسال رابط إعادة التعيين",
+    "backToLogin": "العودة لتسجيل الدخول",
+    "resetSent": "تم إرسال البريد الإلكتروني! تحقق من صندوق الوارد.",
+    "role": {
+      "client": "مسافر",
+      "owner": "صاحب عقار"
+    }
+  },
+  "property": {
+    "perNight": "/ ليلة",
+    "bedrooms": "غرف النوم",
+    "bathrooms": "الحمامات",
+    "guests": "الضيوف",
+    "amenities": "المرافق",
+    "description": "الوصف",
+    "location": "الموقع",
+    "reviews": "التقييمات",
+    "book": "احجز الآن",
+    "available": "متاح",
+    "pending": "قيد الانتظار",
+    "active": "نشط",
+    "rejected": "مرفوض",
+    "checkIn": "تاريخ الوصول",
+    "checkOut": "تاريخ المغادرة",
+    "total": "الإجمالي",
+    "nights": "ليالٍ"
+  },
+  "booking": {
+    "confirmed": "مؤكد",
+    "pending": "قيد الانتظار",
+    "cancelled": "ملغى",
+    "completed": "منتهٍ",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "reject": "رفض"
+  },
+  "common": {
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "add": "إضافة",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "loading": "جارٍ التحميل...",
+    "noData": "لا توجد بيانات",
+    "search": "بحث",
+    "filter": "تصفية",
+    "all": "الكل",
+    "actions": "الإجراءات",
+    "status": "الحالة",
+    "date": "التاريخ",
+    "price": "السعر",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "city": "المدينة",
+    "address": "العنوان",
+    "submit": "إرسال",
+    "back": "رجوع",
+    "next": "التالي",
+    "error": "حدث خطأ",
+    "success": "نجاح"
+  },
+  "theme": {
+    "light": "الوضع الفاتح",
+    "dark": "الوضع الداكن"
+  },
+  "lang": {
+    "fr": "Français",
+    "en": "English",
+    "ar": "العربية"
+  }
+}

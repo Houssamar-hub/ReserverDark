@@ -29,8 +29,14 @@ export const getConversations = async (req, res) => {
           read: false,
         });
 
+        const obj = conversation.toObject();
+        const otherUser = (obj.participants || []).find(
+          (p) => p._id.toString() !== req.user._id.toString()
+        );
+
         return {
-          ...conversation.toObject(),
+          ...obj,
+          otherUser: otherUser || null,
           lastMessage,
           unreadCount,
         };
@@ -152,6 +158,43 @@ export const createConversation = async (req, res) => {
       message: 'Conversation created successfully',
       conversation,
     });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Send a message
+// @route   POST /api/messages
+// @access  Private
+export const sendMessage = async (req, res) => {
+  try {
+    const { conversationId, content } = req.body;
+
+    if (!conversationId || !content?.trim()) {
+      return res.status(400).json({ message: 'conversationId and content are required' });
+    }
+
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ message: 'Conversation not found' });
+    }
+
+    if (!conversation.participants.includes(req.user._id)) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const message = await Message.create({
+      conversation: conversationId,
+      sender: req.user._id,
+      content: content.trim(),
+    });
+
+    conversation.lastMessage = content.trim();
+    await conversation.save();
+
+    const populated = await message.populate('sender', 'name avatar');
+
+    res.status(201).json({ message: populated });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
