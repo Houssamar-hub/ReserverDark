@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { formatPrice } from '../../utils/formatPrice';
+import { formatImageUrl, handleImageError } from '../../utils/formatImage';
 import Rating from '../../components/review/Rating';
 import ReviewCard from '../../components/review/ReviewCard';
 import Button from '../../components/common/Button';
@@ -137,7 +138,8 @@ const PropertyDetails = () => {
         <div className="relative rounded-2xl overflow-hidden mb-8 border" style={{ borderColor: 'var(--border)' }}>
           <div className="h-[400px] md:h-[600px]">
             <img
-              src={property.images?.[currentImage] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200'}
+              src={formatImageUrl(property.images?.[currentImage])}
+              onError={handleImageError}
               alt={property.title}
               className="w-full h-full object-cover"
             />

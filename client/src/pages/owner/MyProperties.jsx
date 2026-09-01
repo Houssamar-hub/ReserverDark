@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2, Home, Search, MapPin, Eye, Star, Bed, Bath, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,7 @@ import Spinner from '../../components/common/Spinner';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { formatPrice } from '../../utils/formatPrice';
+import { formatImageUrl, handleImageError } from '../../utils/formatImage';
 
 export default function MyProperties() {
   const { t } = useTranslation();
@@ -148,7 +149,8 @@ export default function MyProperties() {
               {/* Image & Badges */}
               <div className="relative h-52 overflow-hidden group">
                 <img
-                  src={p.images?.[0] || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800'}
+                  src={formatImageUrl(p.images?.[0])}
+                  onError={handleImageError}
                   alt={p.title}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />

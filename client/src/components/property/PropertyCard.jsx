@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { MapPin, Star, Users, Bed, Bath } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatPrice } from "../../utils/formatPrice";
+import { formatImageUrl, handleImageError } from "../../utils/formatImage";
 
 const PropertyCard = ({ property }) => {
   const { t } = useTranslation();
@@ -23,7 +24,8 @@ const PropertyCard = ({ property }) => {
       {/* Image */}
       <div className="relative overflow-hidden" style={{ height: "200px" }}>
         <img
-          src={property.images?.[0] || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"}
+          src={formatImageUrl(property.images?.[0])}
+          onError={handleImageError}
           alt={property.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />

@@ -9,6 +9,7 @@ import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
+import { formatImageUrl, handleImageError } from '../../utils/formatImage';
 
 export default function OwnerBookings() {
   const { t } = useTranslation();
@@ -182,7 +183,8 @@ export default function OwnerBookings() {
                 <div className="flex items-start gap-4 flex-1">
                   <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 border" style={{ borderColor: 'var(--border)' }}>
                     <img
-                      src={b.property?.images?.[0] || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400'}
+                      src={formatImageUrl(b.property?.images?.[0])}
+                      onError={handleImageError}
                       alt={b.property?.title}
                       className="w-full h-full object-cover"
                     />

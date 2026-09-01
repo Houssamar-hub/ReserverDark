@@ -1,5 +1,6 @@
 import Property from '../models/Property.js';
 import User from '../models/User.js';
+import Review from '../models/Review.js';
 import cloudinary from '../config/cloudinary.js';
 
 // @desc    Create property
@@ -159,11 +160,7 @@ export const getProperties = async (req, res) => {
 export const getPropertyById = async (req, res) => {
   try {
     const property = await Property.findById(req.params.id)
-      .populate('owner', 'name email avatar phone')
-      .populate({
-        path: 'reviews',
-        populate: { path: 'client', select: 'name avatar' },
-      });
+      .populate('owner', 'name email avatar phone');
 
     if (!property) {
       return res.status(404).json({ message: 'Property not found' });
@@ -176,7 +173,15 @@ export const getPropertyById = async (req, res) => {
       }
     }
 
-    res.status(200).json({ property });
+    // Fetch reviews for this property
+    const reviews = await Review.find({ property: property._id })
+      .populate('client', 'name avatar')
+      .sort({ createdAt: -1 });
+
+    const propertyObj = property.toObject();
+    propertyObj.reviews = reviews || [];
+
+    res.status(200).json({ property: propertyObj });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
