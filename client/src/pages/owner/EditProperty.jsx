@@ -99,14 +99,13 @@ export default function EditProperty() {
     });
   };
 
-  // Direct File Upload from PC or Phone
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
     const validFiles = files.filter(f => f.size <= 10 * 1024 * 1024);
     if (validFiles.length < files.length) {
-      toast.error('Certaines images dépassent la taille maximale autorisée (10 Mo)');
+      toast.error('Certaines images dépassent 10 Mo');
     }
     if (validFiles.length === 0) return;
 
@@ -141,7 +140,7 @@ export default function EditProperty() {
         ...prev,
         images: [...prev.images, ...previews]
       }));
-      toast.success(`${previews.length} photo(s) chargée(s) localement`);
+      toast.success(`${previews.length} photo(s) chargée(s)`);
     } finally {
       setUploadingFiles(false);
       if (fileInputRef.current) {
@@ -173,7 +172,7 @@ export default function EditProperty() {
       const [chosen] = copy.splice(index, 1);
       return { ...prev, images: [chosen, ...copy] };
     });
-    toast.success('Photo définie comme photo de couverture !');
+    toast.success('Photo définie comme couverture !');
   };
 
   const handleSubmit = async (e) => {
@@ -238,7 +237,6 @@ export default function EditProperty() {
           </p>
         </div>
 
-        {/* Status Badge */}
         <div>
           <span className={
             formData.status === 'approved'
@@ -475,7 +473,7 @@ export default function EditProperty() {
           </div>
         </div>
 
-        {/* Section 4: Photos du Logement (Upload PC / Téléphone) */}
+        {/* Section 4: Photos du Logement */}
         <div className="card p-6 md:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
             <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
@@ -496,7 +494,6 @@ export default function EditProperty() {
             Importez de nouvelles photos directement depuis votre ordinateur ou téléphone.
           </p>
 
-          {/* Hidden File Input */}
           <input
             type="file"
             ref={fileInputRef}
@@ -506,7 +503,7 @@ export default function EditProperty() {
             className="hidden"
           />
 
-          {/* Drag & Drop / Click Upload Zone */}
+          {/* Drag & Drop Upload Zone */}
           <div
             onClick={() => fileInputRef.current && fileInputRef.current.click()}
             className="border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-200 hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 group mb-6"
@@ -517,9 +514,6 @@ export default function EditProperty() {
                 <Loader2 className="w-10 h-10 animate-spin mb-3" style={{ color: 'var(--accent)' }} />
                 <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
                   Téléversement des photos en cours...
-                </p>
-                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                  Veuillez patienter quelques instants.
                 </p>
               </div>
             ) : (
@@ -533,7 +527,7 @@ export default function EditProperty() {
                   Cliquez ici pour choisir des photos
                 </p>
                 <p className="text-xs max-w-sm mx-auto mb-4" style={{ color: 'var(--text-muted)' }}>
-                  Glissez-déposez vos fichiers ou parcourez la galerie de votre appareil (JPG, PNG, WebP jusqu'à 10 Mo).
+                  Glissez-déposez vos fichiers ou parcourez la galerie de votre appareil (JPG, PNG, WebP).
                 </p>
 
                 <div className="flex items-center gap-3 text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
@@ -604,7 +598,6 @@ export default function EditProperty() {
                       className="w-full h-full object-cover"
                     />
 
-                    {/* Overlay controls */}
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       {index !== 0 && (
                         <button

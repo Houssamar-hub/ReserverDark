@@ -61,17 +61,14 @@ export default function AddProperty() {
     });
   };
 
-  // Direct File Upload from PC or Phone
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    // Validate size (max 10MB per file)
     const validFiles = files.filter(f => f.size <= 10 * 1024 * 1024);
     if (validFiles.length < files.length) {
-      toast.error('Certaines images dépassent la taille maximale autorisée (10 Mo)');
+      toast.error('Certaines images dépassent 10 Mo');
     }
-
     if (validFiles.length === 0) return;
 
     setUploadingFiles(true);
@@ -94,7 +91,6 @@ export default function AddProperty() {
         toast.success(`${newUrls.length} photo(s) importée(s) avec succès !`);
       }
     } catch {
-      // Fallback: create base64 previews if backend upload failed
       const previews = await Promise.all(
         validFiles.map(file => new Promise((resolve) => {
           const reader = new FileReader();
@@ -106,7 +102,7 @@ export default function AddProperty() {
         ...prev,
         images: [...prev.images, ...previews]
       }));
-      toast.success(`${previews.length} photo(s) chargée(s) localement`);
+      toast.success(`${previews.length} photo(s) chargée(s)`);
     } finally {
       setUploadingFiles(false);
       if (fileInputRef.current) {
@@ -138,7 +134,7 @@ export default function AddProperty() {
       const [chosen] = copy.splice(index, 1);
       return { ...prev, images: [chosen, ...copy] };
     });
-    toast.success('Photo définie comme photo de couverture !');
+    toast.success('Photo définie comme couverture !');
   };
 
   const handleSubmit = async (e) => {
@@ -152,7 +148,7 @@ export default function AddProperty() {
       return;
     }
     if (formData.images.length === 0) {
-      toast.error('Veuillez ajouter au moins une photo de votre logement');
+      toast.error('Veuillez ajouter au moins une photo');
       return;
     }
 
@@ -168,7 +164,7 @@ export default function AddProperty() {
       };
 
       await api.post('/properties', payload);
-      toast.success('Logement ajouté avec succès ! En attente de validation.');
+      toast.success('Logement ajouté avec succès !');
       navigate('/owner/properties');
     } catch (err) {
       toast.error(err.response?.data?.message || t('common.error'));
@@ -424,7 +420,7 @@ export default function AddProperty() {
           </div>
         </div>
 
-        {/* Section 4: Photos du Logement (Upload PC / Téléphone) */}
+        {/* Section 4: Photos du Logement */}
         <div className="card p-6 md:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
             <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
@@ -445,7 +441,6 @@ export default function AddProperty() {
             Importez les photos depuis votre appareil (ordinateur, smartphone ou tablette).
           </p>
 
-          {/* Hidden File Input */}
           <input
             type="file"
             ref={fileInputRef}
@@ -455,7 +450,7 @@ export default function AddProperty() {
             className="hidden"
           />
 
-          {/* Drag & Drop / Click Upload Zone */}
+          {/* Drag & Drop Upload Zone */}
           <div
             onClick={() => fileInputRef.current && fileInputRef.current.click()}
             className="border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-200 hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 group mb-6"
@@ -466,9 +461,6 @@ export default function AddProperty() {
                 <Loader2 className="w-10 h-10 animate-spin mb-3" style={{ color: 'var(--accent)' }} />
                 <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
                   Téléversement des photos en cours...
-                </p>
-                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                  Veuillez patienter quelques instants.
                 </p>
               </div>
             ) : (
@@ -482,7 +474,7 @@ export default function AddProperty() {
                   Cliquez ici pour choisir des photos
                 </p>
                 <p className="text-xs max-w-sm mx-auto mb-4" style={{ color: 'var(--text-muted)' }}>
-                  Glissez-déposez vos fichiers ou parcourez la galerie de votre appareil (JPG, PNG, WebP jusqu'à 10 Mo).
+                  Glissez-déposez vos fichiers ou parcourez la galerie de votre appareil (JPG, PNG, WebP).
                 </p>
 
                 <div className="flex items-center gap-3 text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
@@ -538,7 +530,7 @@ export default function AddProperty() {
                   {formData.images.length} photo(s) sélectionnée(s)
                 </span>
                 <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                  (Cliquez sur une photo pour la définir comme photo de couverture)
+                  (Cliquez sur "Couverture" pour changer la photo principale)
                 </span>
               </div>
 
@@ -553,7 +545,6 @@ export default function AddProperty() {
                       className="w-full h-full object-cover"
                     />
 
-                    {/* Overlay controls */}
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       {index !== 0 && (
                         <button
