@@ -1,14 +1,16 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Building2, MapPin, DollarSign, Users, Bed, Bath,
-  Plus, Trash2, ArrowLeft, Image as ImageIcon, Check, Save, Sparkles
+  Plus, Trash2, ArrowLeft, Image as ImageIcon, Check, Save, Sparkles,
+  Upload, Smartphone, Laptop, Loader2
 } from 'lucide-react';
 import Spinner from '../../components/common/Spinner';
 import Button from '../../components/common/Button';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import { formatImageUrl, handleImageError } from '../../utils/formatImage';
 
 const CITIES = ['Casablanca', 'Marrakech', 'Rabat', 'Agadir', 'Fès', 'Tanger', 'Essaouira', 'Chefchaouen', 'Ouarzazate', 'Meknès'];
 const PROPERTY_TYPES = ['Appartement', 'Villa', 'Maison', 'Studio', 'Chambre', 'Riad', 'Autre'];
@@ -22,8 +24,11 @@ export default function EditProperty() {
   const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+
   const [initialLoading, setInitialLoading] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -42,6 +47,7 @@ export default function EditProperty() {
   });
 
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [showUrlInput, setShowUrlInput] = useState(false);
 
   useEffect(() => {
     fetchProperty();
@@ -93,6 +99,57 @@ export default function EditProperty() {
     });
   };
 
+  // Direct File Upload from PC or Phone
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const validFiles = files.filter(f => f.size <= 10 * 1024 * 1024);
+    if (validFiles.length < files.length) {
+      toast.error('Certaines images dépassent la taille maximale autorisée (10 Mo)');
+    }
+    if (validFiles.length === 0) return;
+
+    setUploadingFiles(true);
+    const fd = new FormData();
+    validFiles.forEach(file => {
+      fd.append('images', file);
+    });
+
+    try {
+      const res = await api.post('/properties/upload', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      const newUrls = res.data.images || [];
+      if (newUrls.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          images: [...prev.images, ...newUrls]
+        }));
+        toast.success(`${newUrls.length} photo(s) importée(s) avec succès !`);
+      }
+    } catch {
+      const previews = await Promise.all(
+        validFiles.map(file => new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => resolve(ev.target.result);
+          reader.readAsDataURL(file);
+        }))
+      );
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...previews]
+      }));
+      toast.success(`${previews.length} photo(s) chargée(s) localement`);
+    } finally {
+      setUploadingFiles(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   const addImage = () => {
     if (!newImageUrl.trim()) return;
     setFormData(prev => ({
@@ -109,6 +166,16 @@ export default function EditProperty() {
     }));
   };
 
+  const setAsCover = (index) => {
+    if (index === 0) return;
+    setFormData(prev => {
+      const copy = [...prev.images];
+      const [chosen] = copy.splice(index, 1);
+      return { ...prev, images: [chosen, ...copy] };
+    });
+    toast.success('Photo définie comme photo de couverture !');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.description.trim() || !formData.address.trim()) {
@@ -117,6 +184,10 @@ export default function EditProperty() {
     }
     if (Number(formData.pricePerNight) <= 0) {
       toast.error('Le prix par nuit doit être supérieur à 0');
+      return;
+    }
+    if (formData.images.length === 0) {
+      toast.error('Veuillez conserver au moins une photo');
       return;
     }
 
@@ -404,59 +475,164 @@ export default function EditProperty() {
           </div>
         </div>
 
-        {/* Section 4: Photos */}
+        {/* Section 4: Photos du Logement (Upload PC / Téléphone) */}
         <div className="card p-6 md:p-8">
-          <h2 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-            <ImageIcon className="w-5 h-5" style={{ color: 'var(--accent)' }} />
-            Photos du logement
-          </h2>
-
-          <div className="flex gap-2 mb-6">
-            <input
-              type="url"
-              value={newImageUrl}
-              onChange={e => setNewImageUrl(e.target.value)}
-              placeholder="https://images.unsplash.com/photo-..."
-              className="input flex-1"
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addImage(); } }}
-            />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+              <ImageIcon className="w-5 h-5" style={{ color: 'var(--accent)' }} />
+              Photos du logement
+            </h2>
             <button
               type="button"
-              onClick={addImage}
-              className="btn-primary flex items-center gap-2 px-5 py-3 rounded-xl whitespace-nowrap"
+              onClick={() => setShowUrlInput(!showUrlInput)}
+              className="text-xs font-semibold hover:underline self-start sm:self-auto"
+              style={{ color: 'var(--accent)' }}
             >
-              <Plus className="w-4 h-4" /> Ajouter
+              {showUrlInput ? 'Masquer l\'ajout par URL' : '+ Ajouter via lien URL'}
             </button>
           </div>
 
+          <p className="text-xs mb-6" style={{ color: 'var(--text-muted)' }}>
+            Importez de nouvelles photos directement depuis votre ordinateur ou téléphone.
+          </p>
+
+          {/* Hidden File Input */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            multiple
+            accept="image/*"
+            className="hidden"
+          />
+
+          {/* Drag & Drop / Click Upload Zone */}
+          <div
+            onClick={() => fileInputRef.current && fileInputRef.current.click()}
+            className="border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-200 hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 group mb-6"
+            style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-secondary)' }}
+          >
+            {uploadingFiles ? (
+              <div className="flex flex-col items-center justify-center py-4">
+                <Loader2 className="w-10 h-10 animate-spin mb-3" style={{ color: 'var(--accent)' }} />
+                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                  Téléversement des photos en cours...
+                </p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                  Veuillez patienter quelques instants.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-2">
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110"
+                  style={{ backgroundColor: 'var(--accent-light)' }}>
+                  <Upload className="w-8 h-8" style={{ color: 'var(--accent)' }} />
+                </div>
+
+                <p className="text-base font-bold mb-1.5" style={{ color: 'var(--text-primary)' }}>
+                  Cliquez ici pour choisir des photos
+                </p>
+                <p className="text-xs max-w-sm mx-auto mb-4" style={{ color: 'var(--text-muted)' }}>
+                  Glissez-déposez vos fichiers ou parcourez la galerie de votre appareil (JPG, PNG, WebP jusqu'à 10 Mo).
+                </p>
+
+                <div className="flex items-center gap-3 text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                  <span className="flex items-center gap-1">
+                    <Laptop className="w-4 h-4" style={{ color: 'var(--accent)' }} /> PC / Mac
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Smartphone className="w-4 h-4" style={{ color: 'var(--accent)' }} /> Téléphone / Tablette
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Optional URL Input */}
+          {showUrlInput && (
+            <div className="p-4 rounded-xl border mb-6 space-y-3" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border)' }}>
+              <span className="text-xs font-semibold block" style={{ color: 'var(--text-primary)' }}>
+                Ajouter une image via un lien web direct :
+              </span>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={newImageUrl}
+                  onChange={e => setNewImageUrl(e.target.value)}
+                  placeholder="https://images.unsplash.com/..."
+                  className="input flex-1"
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addImage(); } }}
+                />
+                <button
+                  type="button"
+                  onClick={addImage}
+                  className="btn-primary flex items-center gap-2 px-5 py-3 rounded-xl whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4" /> Ajouter
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Images Grid preview */}
           {formData.images.length === 0 ? (
-            <div className="text-center py-10 border border-dashed rounded-2xl" style={{ borderColor: 'var(--border)' }}>
-              <ImageIcon className="w-10 h-10 mx-auto mb-2 opacity-30" />
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Aucune photo pour le moment</p>
+            <div className="text-center py-8 rounded-xl border" style={{ borderColor: 'var(--border)' }}>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                Aucune photo ajoutée pour le moment.
+              </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {formData.images.map((img, index) => (
-                <div key={index} className="relative group rounded-xl overflow-hidden aspect-video border"
-                  style={{ borderColor: 'var(--border)' }}>
-                  <img src={img} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="p-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all"
-                      title="Supprimer la photo"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                  {formData.images.length} photo(s) actuelle(s)
+                </span>
+                <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                  (Cliquez sur "Couverture" pour changer la photo principale)
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {formData.images.map((img, index) => (
+                  <div key={index} className="relative group rounded-xl overflow-hidden aspect-video border shadow-sm"
+                    style={{ borderColor: index === 0 ? 'var(--accent)' : 'var(--border)' }}>
+                    <img
+                      src={formatImageUrl(img)}
+                      onError={handleImageError}
+                      alt={`Photo ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+
+                    {/* Overlay controls */}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      {index !== 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setAsCover(index)}
+                          className="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all"
+                        >
+                          Couverture
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="p-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {index === 0 && (
+                      <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-600 text-white shadow">
+                        ★ Couverture
+                      </span>
+                    )}
                   </div>
-                  {index === 0 && (
-                    <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-600 text-white">
-                      Couverture
-                    </span>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </div>

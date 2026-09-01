@@ -59,20 +59,24 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Sanitize request parameters — rebuild req.query as a plain writable object
-// to avoid "Cannot set property query — has only a getter" in Express 4.x
+// Sanitize request parameters — prevent MongoDB NoSQL operator injection (keys starting with $)
+// while preserving valid string characters such as dots in URLs, emails, and decimals
 app.use((req, res, next) => {
-  // Sanitize query parameters by creating a fresh sanitized copy
+  const sanitizeKeyObject = (obj) => {
+    if (!obj || typeof obj !== "object") return;
+    Object.keys(obj).forEach((key) => {
+      if (key.startsWith("$")) {
+        delete obj[key];
+      } else if (typeof obj[key] === "object" && obj[key] !== null) {
+        sanitizeKeyObject(obj[key]);
+      }
+    });
+  };
+
   const rawQuery = req.query;
   if (rawQuery && typeof rawQuery === "object") {
-    const sanitizedQuery = {};
-    Object.keys(rawQuery).forEach((key) => {
-      sanitizedQuery[key] =
-        typeof rawQuery[key] === "string"
-          ? rawQuery[key].replace(/[{}()\[\]$.]/g, "")
-          : rawQuery[key];
-    });
-    // Override the read-only getter with our sanitized writable value
+    const sanitizedQuery = { ...rawQuery };
+    sanitizeKeyObject(sanitizedQuery);
     Object.defineProperty(req, "query", {
       value: sanitizedQuery,
       writable: true,
@@ -80,19 +84,8 @@ app.use((req, res, next) => {
     });
   }
 
-  // Sanitize body parameters in-place (body is a plain object, so safe to mutate)
   if (req.body) {
-    const sanitizeObj = (obj) => {
-      if (!obj || typeof obj !== "object") return;
-      Object.keys(obj).forEach((key) => {
-        if (typeof obj[key] === "string") {
-          obj[key] = obj[key].replace(/[{}()\[\]$.]/g, "");
-        } else if (typeof obj[key] === "object") {
-          sanitizeObj(obj[key]);
-        }
-      });
-    };
-    sanitizeObj(req.body);
+    sanitizeKeyObject(req.body);
   }
 
   next();

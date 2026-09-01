@@ -26,3 +26,19 @@ export const authenticateUser = async (req, res, next) => {
     res.status(401).json({ message: 'Token is not valid' });
   }
 };
+
+export const optionalAuth = async (req, res, next) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.id).select('-password');
+      if (user && !user.isBlocked) {
+        req.user = user;
+      }
+    }
+  } catch {
+    // Ignore invalid/expired token on optional auth routes
+  }
+  next();
+};

@@ -5,13 +5,30 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const avatarUploadDir = path.join(__dirname, '../uploads/avatars');
+export const propertyUploadDir = path.join(__dirname, '../uploads/properties');
 fs.mkdirSync(avatarUploadDir, { recursive: true });
+fs.mkdirSync(propertyUploadDir, { recursive: true });
 
-// Configure multer for memory storage
-const storage = multer.diskStorage({
-  filename: (req, file, cb) => {
+const propertyStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, propertyUploadDir),
+  filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    cb(null, 'property-' + uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+export const uploadPropertyFiles = multer({
+  storage: propertyStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (extname && mimetype) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only images are allowed'), false);
+    }
   },
 });
 

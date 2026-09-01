@@ -168,7 +168,8 @@ export const getPropertyById = async (req, res) => {
 
     // If property is pending, only owner and admin can see it
     if (property.status === 'pending') {
-      if (!req.user || (req.user._id.toString() !== property.owner._id.toString() && req.user.role !== 'admin')) {
+      const ownerId = property.owner?._id ? property.owner._id.toString() : property.owner ? property.owner.toString() : null;
+      if (!req.user || (ownerId && req.user._id.toString() !== ownerId && req.user.role !== 'admin')) {
         return res.status(403).json({ message: 'This property is not available yet' });
       }
     }
@@ -268,24 +269,70 @@ export const uploadImages = async (req, res) => {
       return res.status(400).json({ message: 'No images uploaded' });
     }
 
-    const uploadPromises = req.files.map((file) => {
-      return cloudinary.uploader.upload(file.path, {
-        folder: 'properties',
-        width: 800,
-        height: 600,
-        crop: 'fill',
-      });
+    const uploadPromises = req.files.map(async (file) => {
+      let imageUrl = `${req.protocol}://${req.get('host')}/uploads/properties/${file.filename}`;
+      if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY) {
+        try {
+          const res = await cloudinary.uploader.upload(file.path, {
+            folder: 'properties',
+            width: 1200,
+            height: 800,
+            crop: 'limit',
+          });
+          imageUrl = res.secure_url;
+        } catch (cloudErr) {
+          console.error('Cloudinary fallback to local:', cloudErr.message);
+        }
+      }
+      return imageUrl;
     });
 
     const results = await Promise.all(uploadPromises);
-    const imageUrls = results.map((result) => result.secure_url);
 
-    property.images = [...property.images, ...imageUrls];
+    property.images = [...property.images, ...results];
     await property.save();
 
     res.status(200).json({
       message: 'Images uploaded successfully',
       images: property.images,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Standalone upload property photos (returns uploaded URLs)
+// @route   POST /api/properties/upload
+// @access  Private (Owner/Admin)
+export const uploadPropertyPhotos = async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'No images uploaded' });
+    }
+
+    const uploadPromises = req.files.map(async (file) => {
+      let imageUrl = `${req.protocol}://${req.get('host')}/uploads/properties/${file.filename}`;
+      if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY) {
+        try {
+          const cloudRes = await cloudinary.uploader.upload(file.path, {
+            folder: 'properties',
+            width: 1200,
+            height: 800,
+            crop: 'limit',
+          });
+          imageUrl = cloudRes.secure_url;
+        } catch (cloudErr) {
+          console.error('Cloudinary fallback to local file:', cloudErr.message);
+        }
+      }
+      return imageUrl;
+    });
+
+    const imageUrls = await Promise.all(uploadPromises);
+
+    res.status(200).json({
+      message: 'Images uploaded successfully',
+      images: imageUrls,
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
