@@ -43,7 +43,7 @@ export const createProperty = async (req, res) => {
       maxGuests,
       bedrooms,
       bathrooms,
-      images: [],
+      images: Array.isArray(req.body.images) && req.body.images.length > 0 ? req.body.images : [],
       status: 'pending',
     });
 

@@ -40,7 +40,7 @@ export default function OwnerDashboard() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-extrabold" style={{ color: 'var(--text-primary)' }}>
-            Bonjour, {user?.name?.split(' ')[0]} 🏠
+            Bonjour, {user?.name?.split(' ')[0]}
           </h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Tableau de bord propriétaire</p>
         </div>

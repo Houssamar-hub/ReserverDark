@@ -54,15 +54,15 @@ const Sidebar = ({ role }) => {
           <NavLink
             key={to}
             to={to}
-            end={to === '/client' || to === '/owner' || to === '/admin'}
+            end
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 isActive
-                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                  : 'hover:bg-gray-100 dark:hover:bg-white/10'
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+                  : 'hover:bg-slate-100 dark:hover:bg-white/10'
               }`
             }
-            style={({ isActive }) => isActive ? {} : { color: 'var(--text-muted)' }}
+            style={({ isActive }) => (isActive ? {} : { color: 'var(--text-muted)' })}
           >
             <Icon className="w-4 h-4 flex-shrink-0" />
             <span>{label}</span>

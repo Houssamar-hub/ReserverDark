@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
-import { Sun, Moon, Globe, LogOut, Menu, X, LayoutDashboard, ChevronDown } from 'lucide-react';
+﻿import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
+import { Sun, Moon, LogOut, Menu, X, LayoutDashboard, ChevronDown, Home } from "lucide-react";
 
 const LANGS = [
-  { code: 'fr', label: 'Français', flag: '🇫🇷' },
-  { code: 'en', label: 'English',  flag: '🇬🇧' },
-  { code: 'ar', label: 'العربية',  flag: '🇸🇦' },
+  { code: "fr", label: "Francais", flag: "FR" },
+  { code: "en", label: "English",  flag: "EN" },
+  { code: "ar", label: "AR",       flag: "AR" },
 ];
 
 const Navbar = () => {
@@ -16,123 +16,140 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [langOpen, setLangOpen] = useState(false);
+  const [menuOpen, setMenuOpen]  = useState(false);
+  const [langOpen, setLangOpen]  = useState(false);
+  const [scrolled, setScrolled]  = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-    setMenuOpen(false);
-  };
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
-  const changeLang = (code) => {
-    i18n.changeLanguage(code);
-    setLangOpen(false);
-  };
+  const handleLogout = () => { logout(); navigate("/login"); setMenuOpen(false); };
+  const changeLang   = (code) => { i18n.changeLanguage(code); setLangOpen(false); };
 
   const dashboardPath = user
-    ? user.role === 'admin' ? '/admin' : user.role === 'owner' ? '/owner' : '/client'
-    : '/login';
+    ? user.role === "admin" ? "/admin" : user.role === "owner" ? "/owner" : "/client"
+    : "/login";
 
   const currentLang = LANGS.find(l => l.code === i18n.language) || LANGS[0];
 
+  const navLinks = [
+    { to: "/",           label: t("nav.home") || "Accueil" },
+    { to: "/properties", label: t("nav.properties") },
+    { to: "/about",      label: t("nav.about") },
+    { to: "/contact",    label: t("nav.contact") },
+  ];
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 transition-colors duration-200"
-      style={{ backgroundColor: 'var(--bg-primary)', borderBottom: '1px solid var(--border)' }}>
+    <nav
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+      style={{
+        backgroundColor: "var(--bg-card)",
+        borderBottom: "1px solid var(--border)",
+        boxShadow: scrolled ? "0 2px 16px rgba(0,0,0,0.08)" : "none",
+      }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 font-extrabold text-xl tracking-tight" style={{ color: 'var(--text-primary)' }}>
-            <span className="w-7 h-7 rounded-lg bg-gray-900 dark:bg-white flex items-center justify-center">
-              <span className="text-white dark:text-gray-900 text-sm font-black">R</span>
+          <Link to="/" className="flex items-center gap-2 select-none">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: "var(--accent)" }}>
+              <Home className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-base tracking-tight" style={{ color: "var(--text-primary)" }}>
+              ReserverDark<span style={{ color: "var(--accent)" }}>.</span>
             </span>
-            ReserverDark
           </Link>
 
-          {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-6">
-            <Link to="/properties" className="text-sm font-medium transition-colors hover:text-primary-500"
-              style={{ color: 'var(--text-muted)' }}>
-              {t('nav.properties')}
-            </Link>
-            <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary-500"
-              style={{ color: 'var(--text-muted)' }}>
-              {t('nav.about')}
-            </Link>
-            <Link to="/contact" className="text-sm font-medium transition-colors hover:text-primary-500"
-              style={{ color: 'var(--text-muted)' }}>
-              {t('nav.contact')}
-            </Link>
-
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-7">
+            {navLinks.map(({ to, label }) => (
+              <Link key={to} to={to}
+                className="text-sm font-medium transition-colors relative group"
+                style={{ color: "var(--text-muted)" }}
+                onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"}
+                onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>
+                {label}
+              </Link>
+            ))}
             {user && (
-              <Link to={dashboardPath} className="flex items-center gap-1 text-sm font-medium transition-colors hover:text-primary-500"
-                style={{ color: 'var(--text-muted)' }}>
+              <Link to={dashboardPath}
+                className="flex items-center gap-1.5 text-sm font-medium transition-colors"
+                style={{ color: "var(--text-muted)" }}
+                onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"}
+                onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>
                 <LayoutDashboard className="w-4 h-4" />
-                {t('nav.dashboard')}
+                {t("nav.dashboard")}
               </Link>
             )}
           </div>
 
           {/* Controls */}
-          <div className="hidden md:flex items-center gap-3">
-            {/* Language switcher */}
+          <div className="hidden md:flex items-center gap-2">
+            {/* Lang */}
             <div className="relative">
               <button onClick={() => setLangOpen(!langOpen)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all hover:bg-gray-100 dark:hover:bg-white/10"
-                style={{ color: 'var(--text-muted)' }}>
-                <span>{currentLang.flag}</span>
-                <span>{currentLang.code.toUpperCase()}</span>
+                className="flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
+                style={{ color: "var(--text-muted)", backgroundColor: "var(--bg-secondary)" }}>
+                {currentLang.flag}
                 <ChevronDown className="w-3 h-3" />
               </button>
               {langOpen && (
-                <div className="absolute right-0 top-full mt-2 w-40 rounded-xl shadow-xl z-50 overflow-hidden"
-                  style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                <div className="absolute right-0 top-full mt-2 w-36 z-50 rounded-xl overflow-hidden"
+                  style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
                   {LANGS.map(l => (
                     <button key={l.code} onClick={() => changeLang(l.code)}
-                      className={`flex items-center gap-2 w-full px-4 py-2.5 text-sm text-left transition-colors hover:bg-gray-100 dark:hover:bg-white/10 ${i18n.language === l.code ? 'font-semibold text-primary-500' : ''}`}
-                      style={{ color: i18n.language === l.code ? undefined : 'var(--text-muted)' }}>
-                      <span>{l.flag}</span> {l.label}
+                      className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-left transition-colors"
+                      style={{ color: i18n.language === l.code ? "var(--accent)" : "var(--text-muted)", backgroundColor: "transparent" }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--bg-secondary)"}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}>
+                      {l.label}
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Theme toggle */}
+            {/* Theme */}
             <button onClick={toggleTheme}
-              className="p-2 rounded-lg transition-all hover:bg-gray-100 dark:hover:bg-white/10"
-              title={isDark ? t('theme.light') : t('theme.dark')}
-              style={{ color: 'var(--text-muted)' }}>
+              className="p-2 rounded-lg transition-colors"
+              style={{ color: "var(--text-muted)", backgroundColor: "var(--bg-secondary)" }}>
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
 
-            {/* Auth buttons */}
+            {/* Auth */}
             {user ? (
               <button onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all btn-primary">
-                <LogOut className="w-4 h-4" />
-                {t('nav.logout')}
+                className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+                style={{ border: "1px solid var(--border)", color: "var(--text-primary)" }}>
+                <LogOut className="w-4 h-4" /> {t("nav.logout")}
               </button>
             ) : (
               <div className="flex items-center gap-2">
-                <Link to="/login" className="px-4 py-2 text-sm font-medium rounded-xl transition-all btn-secondary"
-                  style={{ color: 'var(--text-primary)' }}>
-                  {t('nav.login')}
+                <Link to="/login"
+                  className="text-sm font-medium px-4 py-2 rounded-xl transition-colors"
+                  style={{ color: "var(--text-muted)" }}>
+                  {t("nav.login")}
                 </Link>
-                <Link to="/register" className="px-4 py-2 text-sm font-semibold rounded-xl transition-all btn-primary">
-                  {t('nav.register')}
+                <Link to="/register"
+                  className="text-sm font-semibold px-5 py-2.5 rounded-xl text-white transition-all hover:opacity-90"
+                  style={{ backgroundColor: "var(--accent)" }}>
+                  {t("nav.register") || "S inscrire"}
                 </Link>
               </div>
             )}
           </div>
 
-          {/* Mobile menu button */}
+          {/* Mobile */}
           <div className="md:hidden flex items-center gap-2">
-            <button onClick={toggleTheme} className="p-2 rounded-lg" style={{ color: 'var(--text-muted)' }}>
+            <button onClick={toggleTheme} className="p-2" style={{ color: "var(--text-muted)" }}>
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
-            <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 rounded-lg" style={{ color: 'var(--text-muted)' }}>
+            <button onClick={() => setMenuOpen(!menuOpen)} className="p-2" style={{ color: "var(--text-muted)" }}>
               {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
@@ -141,50 +158,38 @@ const Navbar = () => {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden border-t" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
-          <div className="px-4 py-4 space-y-2">
-            {[
-              { to: '/properties', label: t('nav.properties') },
-              { to: '/about', label: t('nav.about') },
-              { to: '/contact', label: t('nav.contact') },
-              ...(user ? [{ to: dashboardPath, label: t('nav.dashboard') }] : []),
-            ].map(({ to, label }) => (
+        <div className="md:hidden" style={{ backgroundColor: "var(--bg-card)", borderTop: "1px solid var(--border)" }}>
+          <div className="px-4 py-4 space-y-1">
+            {[...navLinks, ...(user ? [{ to: dashboardPath, label: t("nav.dashboard") }] : [])].map(({ to, label }) => (
               <Link key={to} to={to} onClick={() => setMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-gray-100 dark:hover:bg-white/10"
-                style={{ color: 'var(--text-muted)' }}>
+                className="block py-3 text-sm font-medium border-b"
+                style={{ color: "var(--text-muted)", borderColor: "var(--border)" }}>
                 {label}
               </Link>
             ))}
-
-            {/* Language switcher mobile */}
-            <div className="border-t pt-3 mt-3 flex gap-2 flex-wrap" style={{ borderColor: 'var(--border)' }}>
-              {LANGS.map(l => (
-                <button key={l.code} onClick={() => { changeLang(l.code); setMenuOpen(false); }}
-                  className={`px-3 py-1.5 rounded-lg text-sm transition-all ${i18n.language === l.code ? 'btn-primary' : 'btn-secondary'}`}>
-                  {l.flag} {l.code.toUpperCase()}
-                </button>
-              ))}
-            </div>
-
             {user ? (
-              <button onClick={handleLogout} className="w-full btn-primary py-2.5 rounded-xl text-sm font-semibold mt-2 flex items-center justify-center gap-2">
-                <LogOut className="w-4 h-4" /> {t('nav.logout')}
+              <button onClick={handleLogout}
+                className="w-full mt-3 py-3 text-sm font-semibold flex items-center justify-center gap-2 rounded-xl"
+                style={{ border: "1px solid var(--border)", color: "var(--text-primary)" }}>
+                <LogOut className="w-4 h-4" /> {t("nav.logout")}
               </button>
             ) : (
-              <div className="flex gap-2 pt-2">
-                <Link to="/login" onClick={() => setMenuOpen(false)} className="flex-1 text-center py-2.5 btn-secondary rounded-xl text-sm font-medium">
-                  {t('nav.login')}
+              <div className="flex gap-2 pt-3">
+                <Link to="/login" onClick={() => setMenuOpen(false)}
+                  className="flex-1 text-center py-3 text-sm font-semibold rounded-xl"
+                  style={{ border: "1px solid var(--border)", color: "var(--text-primary)" }}>
+                  {t("nav.login")}
                 </Link>
-                <Link to="/register" onClick={() => setMenuOpen(false)} className="flex-1 text-center py-2.5 btn-primary rounded-xl text-sm font-semibold">
-                  {t('nav.register')}
+                <Link to="/register" onClick={() => setMenuOpen(false)}
+                  className="flex-1 text-center py-3 text-sm font-semibold rounded-xl text-white"
+                  style={{ backgroundColor: "var(--accent)" }}>
+                  {t("nav.register") || "S inscrire"}
                 </Link>
               </div>
             )}
           </div>
         </div>
       )}
-
-      {/* Close lang dropdown on outside click */}
       {langOpen && <div className="fixed inset-0 z-40" onClick={() => setLangOpen(false)} />}
     </nav>
   );

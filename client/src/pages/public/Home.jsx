@@ -1,163 +1,307 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, MapPin, Star, ArrowRight, Home, Users, Shield } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import PropertyCard from '../../components/property/PropertyCard';
-import Spinner from '../../components/common/Spinner';
-import api from '../../services/api';
+﻿import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Search, MapPin, ArrowRight, Building2, Briefcase, Home, Trees, Landmark, Shield, Star, Users, CheckCircle, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import PropertyCard from "../../components/property/PropertyCard";
+import Spinner from "../../components/common/Spinner";
+import api from "../../services/api";
+
+const propTypes = [
+  { label: "Appartement", icon: Building2, count: "1 245" },
+  { label: "Bureau",      icon: Briefcase, count: "1 020" },
+  { label: "Maison",      icon: Home,      count: "3 460" },
+  { label: "Villa",       icon: Trees,     count: "2 814" },
+  { label: "Riad",        icon: Landmark,  count: "1 052" },
+];
+
+const cities = ["Casablanca", "Marrakech", "Rabat", "Agadir", "Fes", "Tanger"];
 
 export default function HomePage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [properties, setProperties] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [loading, setLoading]       = useState(true);
+  const [tab, setTab]               = useState("rent");
+  const [search, setSearch]         = useState("");
+  const [selectedType, setSelectedType] = useState(0);
 
   useEffect(() => {
-    api.get('/properties?limit=6&status=active')
+    api.get("/properties?limit=6&status=active")
       .then(res => setProperties(res.data.properties || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  const cities = ['Casablanca', 'Marrakech', 'Rabat', 'Agadir', 'Fès', 'Tanger'];
-
-  const stats = [
-    { label: t('home.stats.cities'),     value: '20+' },
-    { label: t('home.stats.properties'), value: '500+' },
-    { label: t('home.stats.clients'),    value: '10K+' },
-    { label: 'Propriétaires',            value: '200+' },
-  ];
-
-  const steps = [
-    { step: '1', icon: Search, title: t('home.steps.search.title'), desc: t('home.steps.search.desc') },
-    { step: '2', icon: Home,   title: t('home.steps.book.title'),   desc: t('home.steps.book.desc') },
-    { step: '3', icon: Shield, title: t('home.steps.enjoy.title'),  desc: t('home.steps.enjoy.desc') },
-  ];
+  const searchUrl = "/properties" + (search ? "?city=" + search : "");
 
   return (
-    <div className="min-h-screen transition-colors duration-200" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <div style={{ backgroundColor: "var(--bg-primary)" }}>
 
-      {/* ── Hero ─────────────────────────────────────────────── */}
-      <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background image with dark/light overlay */}
-        <div className="absolute inset-0"
-          style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1539650116574-75c0c6d73f6e?w=1920)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
-        <div className="absolute inset-0 bg-black/60 dark:bg-black/70" />
+      {/* HERO */}
+      <section className="pt-16 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-12 items-center" style={{ minHeight: "calc(100vh - 64px)", paddingTop: "4rem", paddingBottom: "4rem" }}>
 
-        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
+            <div>
+              <div className="flex items-center gap-2 mb-6">
+                <div className="h-px w-8" style={{ backgroundColor: "var(--accent)" }} />
+                <span className="text-sm font-medium" style={{ color: "var(--accent)" }}>
+                  Trouvez votre logement ideal
+                </span>
+              </div>
 
+              <h1 className="font-display leading-tight mb-6" style={{ fontSize: "clamp(2.2rem,5vw,3.5rem)", color: "var(--text-primary)" }}>
+                Louer, Acheter<br />et Vendre au
+                <span style={{ color: "var(--accent)" }}> Maroc</span>
+              </h1>
 
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-            {t('home.hero.title').split('Maroc')[0]}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-300 to-white">
-              {t('home.hero.title').includes('Maroc') ? 'Maroc' : ''}
-            </span>
-          </h1>
+              <p className="text-base leading-relaxed mb-8 max-w-md" style={{ color: "var(--text-muted)" }}>
+                La plateforme de reference pour la location courte duree. Appartements, villas, riads — louez en toute confiance partout au Maroc.
+              </p>
 
-          <p className="text-lg text-white/80 mb-10 max-w-2xl mx-auto">
-            {t('home.hero.subtitle')}
-          </p>
+              <p className="text-base font-semibold mb-5" style={{ color: "var(--text-primary)" }}>
+                Trouvez votre{" "}
+                <span style={{ color: "var(--accent)" }}>logement ideal.</span>
+              </p>
 
-          {/* Search bar */}
-          <div className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
-              <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-                placeholder={t('home.hero.cityPlaceholder')}
-                className="w-full pl-10 pr-4 py-3 bg-white/10 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all" />
+              {/* Tabs */}
+              <div className="flex items-center gap-1 mb-6 p-1 rounded-xl w-fit"
+                style={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
+                {[["rent","Louer"],["buy","Acheter"]].map(([key, label]) => (
+                  <button key={key} onClick={() => setTab(key)}
+                    className="px-6 py-2.5 rounded-lg text-sm font-semibold transition-all"
+                    style={tab === key
+                      ? { backgroundColor: "var(--accent)", color: "#fff", boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }
+                      : { color: "var(--text-muted)", backgroundColor: "transparent" }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search box */}
+              <div className="rounded-2xl p-3"
+                style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", boxShadow: "var(--shadow-lg)" }}>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex-1">
+                    <label className="text-xs font-semibold block mb-1.5 px-1" style={{ color: "var(--text-muted)" }}>Ville</label>
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                      style={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
+                      <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: "var(--accent)" }} />
+                      <select value={search} onChange={e => setSearch(e.target.value)}
+                        className="w-full bg-transparent text-sm focus:outline-none"
+                        style={{ color: search ? "var(--text-primary)" : "var(--text-muted)" }}>
+                        <option value="">Toutes les villes</option>
+                        {cities.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs font-semibold block mb-1.5 px-1" style={{ color: "var(--text-muted)" }}>Type</label>
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                      style={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
+                      <Building2 className="w-4 h-4 flex-shrink-0" style={{ color: "var(--accent)" }} />
+                      <select className="w-full bg-transparent text-sm focus:outline-none" style={{ color: "var(--text-muted)" }}>
+                        <option>Appartement</option>
+                        <option>Villa</option>
+                        <option>Maison</option>
+                        <option>Bureau</option>
+                        <option>Riad</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex items-end">
+                    <button onClick={() => navigate(searchUrl)}
+                      className="flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm transition-all hover:opacity-90 whitespace-nowrap w-full sm:w-auto justify-center"
+                      style={{ backgroundColor: "var(--accent)" }}>
+                      <Search className="w-4 h-4" /> Rechercher
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* City pills */}
+              <div className="flex flex-wrap gap-2 mt-4">
+                {cities.map(city => (
+                  <Link key={city} to={"/properties?city=" + city}
+                    className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                    style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}>
+                    {city}
+                  </Link>
+                ))}
+              </div>
             </div>
-            <Link to={`/properties${search ? `?city=${search}` : ''}`}
-              className="px-7 py-3 bg-white text-gray-900 font-bold rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center gap-2 text-sm">
-              {t('home.hero.search')} <ArrowRight className="w-4 h-4" />
+
+            {/* Right image */}
+            <div className="relative hidden md:block">
+              <div className="relative rounded-3xl overflow-hidden" style={{ height: "560px" }}>
+                <img
+                  src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=900&q=85"
+                  alt="Propriete"
+                  className="w-full h-full object-cover"
+                />
+                {/* Stats card */}
+                <div className="absolute bottom-6 left-6 right-6 rounded-2xl px-5 py-4 flex items-center justify-around"
+                  style={{ backgroundColor: "rgba(255,255,255,0.94)", backdropFilter: "blur(12px)" }}>
+                  {[
+                    { label: "Proprietes", value: "1 000+" },
+                    { label: "Proprietaires", value: "400+" },
+                    { label: "Clients", value: "15K+" },
+                  ].map((s, i) => (
+                    <div key={s.label} className="text-center">
+                      <div className="text-xl font-bold" style={{ color: "var(--accent)" }}>{s.value}</div>
+                      <div className="text-xs" style={{ color: "#64748b" }}>{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full"
+                style={{ backgroundColor: "var(--accent)", opacity: 0.12 }} />
+              <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full"
+                style={{ backgroundColor: "var(--accent)", opacity: 0.08 }} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PROPERTY TYPES */}
+      <section className="py-16 px-4" style={{ backgroundColor: "var(--bg-card)", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="h-px w-8" style={{ backgroundColor: "var(--accent)" }} />
+            <span className="text-sm font-medium" style={{ color: "var(--accent)" }}>Types de logements</span>
+          </div>
+          <h2 className="font-display text-3xl md:text-4xl mb-10" style={{ color: "var(--text-primary)" }}>
+            Explorer par type
+          </h2>
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {propTypes.map(({ label, icon: Icon, count }, i) => (
+              <button key={label} onClick={() => setSelectedType(i)}
+                className="flex-shrink-0 flex flex-col items-center gap-3 px-8 py-6 rounded-2xl transition-all duration-200"
+                style={selectedType === i
+                  ? { backgroundColor: "var(--accent)", color: "#fff", boxShadow: "0 4px 16px rgba(37,99,235,0.35)" }
+                  : { backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                <div className="w-12 h-12 flex items-center justify-center rounded-xl"
+                  style={{ backgroundColor: selectedType === i ? "rgba(255,255,255,0.2)" : "var(--bg-card)" }}>
+                  <Icon className="w-6 h-6" style={{ color: selectedType === i ? "#fff" : "var(--accent)" }} />
+                </div>
+                <div>
+                  <div className="font-semibold text-sm" style={{ color: selectedType === i ? "#fff" : "var(--text-primary)" }}>
+                    {label}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: selectedType === i ? "rgba(255,255,255,0.75)" : "var(--text-muted)" }}>
+                    {count} proprietes
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* POPULAR PROPERTIES */}
+      <section className="py-16 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-start justify-between mb-10">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-px w-8" style={{ backgroundColor: "var(--accent)" }} />
+                <span className="text-sm font-medium" style={{ color: "var(--accent)" }}>Proprietes populaires</span>
+              </div>
+              <h2 className="font-display text-3xl md:text-4xl" style={{ color: "var(--text-primary)" }}>
+                Decouvrir les proprietes
+              </h2>
+            </div>
+            <div className="flex items-center gap-2 mt-auto">
+              <Link to="/properties"
+                className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-all"
+                style={{ backgroundColor: "var(--accent)" }}>
+                Voir tout <ArrowRight className="w-4 h-4" />
+              </Link>
+              <button className="w-10 h-10 flex items-center justify-center rounded-xl transition-all"
+                style={{ border: "1px solid var(--border)", color: "var(--text-muted)", backgroundColor: "var(--bg-card)" }}>
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center py-24"><Spinner size="lg" /></div>
+          ) : properties.length === 0 ? (
+            <div className="text-center py-24">
+              <Home className="w-12 h-12 mx-auto mb-4" style={{ color: "var(--border-strong)" }} />
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>Aucun logement disponible pour le moment</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {properties.map(p => <PropertyCard key={p._id} property={p} />)}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section className="py-16 px-4" style={{ backgroundColor: "var(--bg-card)", borderTop: "1px solid var(--border)" }}>
+        <div className="max-w-5xl mx-auto text-center">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="h-px w-8" style={{ backgroundColor: "var(--accent)" }} />
+            <span className="text-sm font-medium" style={{ color: "var(--accent)" }}>Comment ca marche</span>
+            <div className="h-px w-8" style={{ backgroundColor: "var(--accent)" }} />
+          </div>
+          <h2 className="font-display text-3xl md:text-4xl mb-12" style={{ color: "var(--text-primary)" }}>
+            Simple, rapide et securise
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { step: "01", icon: Search,      title: t("home.steps.search.title"), desc: t("home.steps.search.desc") },
+              { step: "02", icon: CheckCircle, title: t("home.steps.book.title"),   desc: t("home.steps.book.desc") },
+              { step: "03", icon: Shield,      title: t("home.steps.enjoy.title"),  desc: t("home.steps.enjoy.desc") },
+            ].map(({ step, icon: Icon, title, desc }) => (
+              <div key={step}
+                className="flex flex-col items-center text-center p-8 rounded-2xl transition-all hover:-translate-y-1 duration-300"
+                style={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
+                <div className="w-14 h-14 flex items-center justify-center rounded-2xl mb-4"
+                  style={{ backgroundColor: "var(--accent-light)" }}>
+                  <Icon className="w-6 h-6" style={{ color: "var(--accent)" }} />
+                </div>
+                <div className="text-4xl font-bold mb-2" style={{ color: "var(--accent)", opacity: 0.15 }}>{step}</div>
+                <h3 className="font-display text-xl mb-2" style={{ color: "var(--text-primary)" }}>{title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-20 px-4">
+        <div className="max-w-5xl mx-auto rounded-3xl overflow-hidden relative"
+          style={{ background: "linear-gradient(135deg, var(--accent) 0%, #1d4ed8 100%)" }}>
+          <div className="absolute inset-0"
+            style={{ backgroundImage: "radial-gradient(circle at 75% 50%, rgba(255,255,255,0.12) 0%, transparent 60%)" }} />
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 px-10 py-12">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "rgba(191,219,254,0.9)" }}>
+                Pour les proprietaires
+              </p>
+              <h2 className="font-display text-3xl md:text-4xl text-white mb-3">
+                Publiez votre logement
+              </h2>
+              <p className="text-sm leading-relaxed max-w-md" style={{ color: "rgba(191,219,254,0.85)" }}>
+                Rejoignez plus de 400 proprietaires qui font confiance a ReserverDark pour louer leur bien au Maroc.
+              </p>
+            </div>
+            <Link to="/register"
+              className="flex-shrink-0 flex items-center gap-3 px-8 py-4 rounded-2xl text-sm font-bold transition-all hover:scale-105"
+              style={{ backgroundColor: "#fff", color: "var(--accent)" }}>
+              <Users className="w-5 h-5" />
+              Devenir proprietaire
             </Link>
           </div>
-
-          {/* Quick city links */}
-          <div className="flex flex-wrap justify-center gap-2 mt-6">
-            {cities.map(city => (
-              <Link key={city} to={`/properties?city=${city}`}
-                className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white/80 hover:text-white text-sm transition-all flex items-center gap-1">
-                <MapPin className="w-3 h-3" /> {city}
-              </Link>
-            ))}
-          </div>
         </div>
+      </section>
 
-
-      </div>
-
-      {/* ── Stats ────────────────────────────────────────────── */}
-      <div className="py-16 transition-colors" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {stats.map(({ label, value }) => (
-              <div key={label} className="text-center">
-                <div className="text-4xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>{value}</div>
-                <div className="text-sm" style={{ color: 'var(--text-muted)' }}>{label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Featured properties ───────────────────────────────── */}
-      <div className="py-20 px-4 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-10">
-          <div>
-            <h2 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>{t('home.featured')}</h2>
-            <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>Les plus appréciés par nos voyageurs</p>
-          </div>
-          <Link to="/properties" className="flex items-center gap-2 text-primary-500 hover:text-primary-600 transition-colors text-sm font-medium">
-            Voir tout <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-        {loading ? (
-          <div className="flex justify-center py-20"><Spinner size="lg" /></div>
-        ) : properties.length === 0 ? (
-          <div className="text-center py-20">
-            <Home className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
-            <p style={{ color: 'var(--text-muted)' }}>Aucun logement disponible pour le moment</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {properties.map(p => <PropertyCard key={p._id} property={p} />)}
-          </div>
-        )}
-      </div>
-
-      {/* ── How it works ─────────────────────────────────────── */}
-      <div className="py-20 transition-colors" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>{t('home.howItWorks')}</h2>
-          <p className="mb-12 text-sm" style={{ color: 'var(--text-muted)' }}>Simple, rapide et sécurisé</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {steps.map(({ step, title, desc, icon: Icon }) => (
-              <div key={step} className="card p-8 relative">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-gray-900 dark:bg-white rounded-full flex items-center justify-center text-white dark:text-gray-900 font-bold text-sm">
-                  {step}
-                </div>
-                <Icon className="w-10 h-10 text-primary-500 mx-auto mb-4 mt-2" />
-                <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)' }}>{title}</h3>
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── CTA ──────────────────────────────────────────────── */}
-      <div className="py-20 px-4 text-center">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Vous êtes propriétaire ?</h2>
-          <p className="mb-8 text-sm" style={{ color: 'var(--text-muted)' }}>
-            Publiez votre logement et commencez à gagner de l'argent dès aujourd'hui.
-          </p>
-          <Link to="/register"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-xl hover:opacity-90 transition-all">
-            <Users className="w-5 h-5" /> Devenir propriétaire
-          </Link>
-        </div>
-      </div>
     </div>
   );
 }

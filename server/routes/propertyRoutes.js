@@ -17,11 +17,14 @@ const router = express.Router();
 
 // Public routes
 router.get('/', getProperties);
+
+// Owner's own properties — must come BEFORE /:id to avoid "owner" being matched as an id
+router.get('/owner/my', authenticateUser, authorizeRoles('owner', 'admin'), getMyProperties);
+
 router.get('/:id', getPropertyById);
 
-// Owner routes
+// Protected routes (require auth)
 router.use(authenticateUser);
-router.get('/owner/my', authorizeRoles('owner', 'admin'), getMyProperties);
 router.post('/', authorizeRoles('owner', 'admin'), createProperty);
 router.put('/:id', authorizeRoles('owner', 'admin'), updateProperty);
 router.delete('/:id', authorizeRoles('owner', 'admin'), deleteProperty);
