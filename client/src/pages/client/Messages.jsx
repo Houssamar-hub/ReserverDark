@@ -1,5 +1,5 @@
-﻿import { useState, useEffect, useRef } from 'react';
-import { Send, MessageSquare, Search, User as UserIcon, CheckCheck } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Send, MessageSquare, Search, CheckCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import Spinner from '../../components/common/Spinner';
@@ -24,13 +24,12 @@ export default function Messages() {
       const res = await api.get('/messages/conversations');
       const list = res.data.conversations || [];
       setConversations(list);
-      // If we have selected conversation, update its reference
       if (selected) {
         const updated = list.find(c => c._id === selected._id);
         if (updated) setSelected(updated);
       }
     } catch {
-      // silent catch for background polling
+      // silent
     } finally {
       setLoading(false);
     }
@@ -83,7 +82,7 @@ export default function Messages() {
       fetchConversations();
     } catch {
       toast.error(t('common.error'));
-      setText(content); // restore on error
+      setText(content);
     } finally {
       setSending(false);
     }
