@@ -45,11 +45,11 @@ export const createProperty = async (req, res) => {
       bedrooms,
       bathrooms,
       images: Array.isArray(req.body.images) && req.body.images.length > 0 ? req.body.images : [],
-      status: 'pending',
+      status: 'approved',
     });
 
     res.status(201).json({
-      message: 'Property created successfully, waiting for admin approval',
+      message: 'Property created successfully',
       property,
     });
   } catch (error) {
@@ -57,7 +57,7 @@ export const createProperty = async (req, res) => {
   }
 };
 
-// @desc    Get all properties (public - only approved)
+// @desc    Get all properties (public - all available properties)
 // @route   GET /api/properties
 // @access  Public
 export const getProperties = async (req, res) => {
@@ -71,11 +71,19 @@ export const getProperties = async (req, res) => {
       maxGuests,
       amenities,
       sort,
+      status,
       page = 1,
-      limit = 10,
+      limit = 12,
     } = req.query;
 
-    const filter = { status: 'approved' };
+    const filter = {};
+
+    // Only filter by status if explicitly requested and valid
+    if (status && status !== 'active' && status !== 'all') {
+      filter.status = status;
+    } else {
+      filter.status = { $ne: 'rejected' };
+    }
 
     // City filter
     if (city) {
@@ -164,14 +172,6 @@ export const getPropertyById = async (req, res) => {
 
     if (!property) {
       return res.status(404).json({ message: 'Property not found' });
-    }
-
-    // If property is pending, only owner and admin can see it
-    if (property.status === 'pending') {
-      const ownerId = property.owner?._id ? property.owner._id.toString() : property.owner ? property.owner.toString() : null;
-      if (!req.user || (ownerId && req.user._id.toString() !== ownerId && req.user.role !== 'admin')) {
-        return res.status(403).json({ message: 'This property is not available yet' });
-      }
     }
 
     // Fetch reviews for this property

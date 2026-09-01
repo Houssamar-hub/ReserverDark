@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, MapPin, ArrowRight, Building2, Briefcase, Home, Trees, Landmark, Shield, Star, Users, CheckCircle, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -26,7 +26,7 @@ export default function HomePage() {
   const [selectedType, setSelectedType] = useState(0);
 
   useEffect(() => {
-    api.get("/properties?limit=6&status=active")
+    api.get("/properties?limit=6")
       .then(res => setProperties(res.data.properties || []))
       .catch(() => {})
       .finally(() => setLoading(false));

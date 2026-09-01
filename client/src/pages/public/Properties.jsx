@@ -32,7 +32,7 @@ export default function Properties() {
   const fetchProperties = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page, limit: 9, status: 'active' });
+      const params = new URLSearchParams({ page, limit: 12 });
       if (filters.city) params.append('city', filters.city);
       if (filters.minPrice) params.append('minPrice', filters.minPrice);
       if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
@@ -40,7 +40,7 @@ export default function Properties() {
       filters.amenities.forEach(a => params.append('amenities', a));
       const res = await api.get(`/properties?${params}`);
       setProperties(res.data.properties || []);
-      setTotal(res.data.total || 0);
+      setTotal(res.data.pagination?.total || res.data.total || 0);
     } catch {
       setProperties([]);
     } finally {
