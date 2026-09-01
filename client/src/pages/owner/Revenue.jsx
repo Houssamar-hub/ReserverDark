@@ -53,15 +53,15 @@ export default function Revenue() {
   const confirmedBookings = bookings.filter(b => b.status === 'confirmed' || b.status === 'completed');
   const pendingBookings = bookings.filter(b => b.status === 'pending');
 
-  const totalRevenue = confirmedBookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0);
-  const pendingRevenue = pendingBookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+  const totalRevenue = confirmedBookings.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0);
+  const pendingRevenue = pendingBookings.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0);
 
   const now = new Date();
   const currentMonthBookings = confirmedBookings.filter(b => {
     const d = new Date(b.createdAt || b.checkIn);
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   });
-  const currentMonthRevenue = currentMonthBookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+  const currentMonthRevenue = currentMonthBookings.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0);
 
   const avgBookingValue = confirmedBookings.length > 0
     ? Math.round(totalRevenue / confirmedBookings.length)
@@ -73,7 +73,7 @@ export default function Revenue() {
       const d = new Date(b.createdAt || b.checkIn);
       return d.getMonth() === i && d.getFullYear() === now.getFullYear();
     });
-    const amount = monthBookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+    const amount = monthBookings.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0);
     return { month: MONTH_NAMES[i], amount };
   });
 
@@ -87,21 +87,21 @@ export default function Revenue() {
     if (!propertyRevenueMap[pId]) {
       propertyRevenueMap[pId] = { title, amount: 0, count: 0, image: b.property?.images?.[0] };
     }
-    propertyRevenueMap[pId].amount += b.totalPrice || 0;
+    propertyRevenueMap[pId].amount += Number(b.totalPrice) || 0;
     propertyRevenueMap[pId].count += 1;
   });
 
   const propertyRevenues = Object.values(propertyRevenueMap);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold" style={{ color: 'var(--text-primary)' }}>
+          <h1 className="text-2xl sm:text-3xl font-extrabold" style={{ color: 'var(--text-primary)' }}>
             {t('nav.revenue')}
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Suivi des gains, transactions et performances financières de vos biens.
           </p>
         </div>

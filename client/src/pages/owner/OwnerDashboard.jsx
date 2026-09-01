@@ -51,10 +51,10 @@ export default function OwnerDashboard() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: t('nav.properties'), value: stats.properties || 0, icon: Home, color: 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-600/20' },
-          { label: t('booking.pending'), value: stats.pendingBookings || 0, icon: Clock, color: 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-600/20' },
-          { label: t('booking.confirmed'), value: stats.confirmedBookings || 0, icon: Calendar, color: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-600/20' },
-          { label: t('nav.revenue'), value: formatPrice(stats.revenue || 0), icon: TrendingUp, color: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-600/20' },
+          { label: t('nav.properties'), value: stats.properties ?? 0, icon: Home, color: 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-600/20' },
+          { label: t('booking.pending'), value: stats.pendingBookings ?? 0, icon: Clock, color: 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-600/20' },
+          { label: t('booking.confirmed'), value: stats.confirmedBookings ?? 0, icon: Calendar, color: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-600/20' },
+          { label: t('nav.revenue'), value: formatPrice(stats.revenue ?? stats.totalRevenue ?? 0), icon: TrendingUp, color: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-600/20' },
         ].map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="card p-5">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${color}`}><Icon className="w-5 h-5" /></div>

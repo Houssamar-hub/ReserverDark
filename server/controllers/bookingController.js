@@ -225,27 +225,59 @@ export const cancelBooking = async (req, res) => {
 // @access  Private (Owner only)
 export const getBookingStats = async (req, res) => {
   try {
-    const stats = await Booking.aggregate([
-      { $match: { owner: req.user._id } },
-      {
-        $group: {
-          _id: null,
-          totalBookings: { $sum: 1 },
-          pendingBookings: {
-            $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] },
+    const [stats, propertyCount] = await Promise.all([
+      Booking.aggregate([
+        { $match: { owner: req.user._id } },
+        {
+          $group: {
+            _id: null,
+            totalBookings: { $sum: 1 },
+            pendingBookings: {
+              $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] },
+            },
+            confirmedBookings: {
+              $sum: { $cond: [{ $eq: ['$status', 'confirmed'] }, 1, 0] },
+            },
+            completedBookings: {
+              $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] },
+            },
+            totalRevenue: {
+              $sum: {
+                $cond: [
+                  { $in: ['$status', ['confirmed', 'completed']] },
+                  '$totalPrice',
+                  0
+                ]
+              }
+            },
+            pendingRevenue: {
+              $sum: {
+                $cond: [
+                  { $eq: ['$status', 'pending'] },
+                  '$totalPrice',
+                  0
+                ]
+              }
+            },
           },
-          confirmedBookings: {
-            $sum: { $cond: [{ $eq: ['$status', 'confirmed'] }, 1, 0] },
-          },
-          completedBookings: {
-            $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] },
-          },
-          totalRevenue: { $sum: '$totalPrice' },
         },
-      },
+      ]),
+      Property.countDocuments({ owner: req.user._id })
     ]);
 
-    res.status(200).json({ stats: stats[0] || { totalBookings: 0, totalRevenue: 0 } });
+    const result = stats[0] || {
+      totalBookings: 0,
+      pendingBookings: 0,
+      confirmedBookings: 0,
+      completedBookings: 0,
+      totalRevenue: 0,
+      pendingRevenue: 0
+    };
+
+    result.revenue = result.totalRevenue || 0;
+    result.properties = propertyCount || 0;
+
+    res.status(200).json({ stats: result });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
