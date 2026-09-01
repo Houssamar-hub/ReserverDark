@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   MapPin, Users, Bed, Bath, 
   Heart, MessageSquare, 
-  ChevronLeft, ChevronRight 
+  ChevronLeft, ChevronRight,
+  Send, X, Phone, Mail, User as UserIcon, Loader2
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -26,6 +27,9 @@ const PropertyDetails = () => {
   const [currentImage, setCurrentImage] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
   const [bookingData, setBookingData] = useState({
     checkIn: '',
     checkOut: '',
@@ -112,6 +116,61 @@ const PropertyDetails = () => {
       toast.error(error.response?.data?.message || t('common.error'));
     } finally {
       setBookingLoading(false);
+    }
+  };
+
+  const handleOpenContact = () => {
+    if (!user) {
+      toast.error('Connectez-vous pour envoyer un message');
+      navigate('/login');
+      return;
+    }
+    const ownerId = property?.owner?._id || property?.owner;
+    if (user._id === ownerId) {
+      toast.error('Vous êtes le propriétaire de ce logement');
+      return;
+    }
+    if (!messageText) {
+      setMessageText(`Bonjour ${property?.owner?.name || ''}, je suis intéressé par votre logement "${property?.title || ''}". Est-il disponible ?`);
+    }
+    setContactModalOpen(true);
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!messageText.trim()) {
+      toast.error('Veuillez entrer un message');
+      return;
+    }
+    const ownerId = property?.owner?._id || property?.owner;
+    if (!ownerId) {
+      toast.error('Propriétaire introuvable');
+      return;
+    }
+
+    setSendingMessage(true);
+    try {
+      // 1. Get or create conversation with owner
+      const convRes = await api.post('/messages/conversations', {
+        participantId: ownerId,
+        propertyId: property._id
+      });
+      const conversationId = convRes.data.conversation?._id;
+
+      if (conversationId) {
+        // 2. Send the message
+        await api.post('/messages', {
+          conversationId,
+          content: messageText.trim()
+        });
+        toast.success('Message envoyé au propriétaire avec succès !');
+        setContactModalOpen(false);
+        navigate(user.role === 'owner' ? '/owner/messages' : '/client/messages');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || t('common.error'));
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -307,17 +366,12 @@ const PropertyDetails = () => {
 
               <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
                 <button
-                  onClick={() => {
-                    if (!user) {
-                      toast.error('Connectez-vous pour envoyer un message');
-                      navigate('/login');
-                      return;
-                    }
-                  }}
-                  className="flex items-center justify-center gap-2 w-full py-2 bg-gray-50 dark:bg-white/5 border hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors text-sm font-semibold"
-                  style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                  type="button"
+                  onClick={handleOpenContact}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border transition-all text-sm font-semibold hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/20"
+                  style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
                 >
-                  <MessageSquare className="w-4 h-4 text-primary-500" />
+                  <MessageSquare className="w-4 h-4" style={{ color: 'var(--accent)' }} />
                   Contacter le propriétaire
                 </button>
               </div>
@@ -325,6 +379,98 @@ const PropertyDetails = () => {
           </div>
         </div>
       </div>
+
+      {/* Contact Owner Modal */}
+      {contactModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div
+            className="w-full max-w-lg rounded-2xl p-6 md:p-8 shadow-2xl border transition-all"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 mb-4 border-b" style={{ borderColor: 'var(--border)' }}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-base"
+                  style={{ backgroundColor: 'var(--accent)' }}>
+                  {property?.owner?.avatar ? (
+                    <img src={formatImageUrl(property.owner.avatar)} onError={handleImageError} alt="Owner" className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    (property?.owner?.name || 'H')[0].toUpperCase()
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+                    Contacter {property?.owner?.name || 'l\'hôte'}
+                  </h3>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    Propriétaire de "{property?.title}"
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setContactModalOpen(false)}
+                className="p-2 rounded-xl transition-colors hover:bg-gray-100 dark:hover:bg-white/10"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Direct Contact options (Phone / Email if available) */}
+            {property?.owner?.phone && (
+              <div className="mb-4 p-3 rounded-xl border flex items-center justify-between"
+                style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border)' }}>
+                <span className="text-xs font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                  <Phone className="w-4 h-4" style={{ color: 'var(--accent)' }} />
+                  {property.owner.phone}
+                </span>
+                <a
+                  href={`tel:${property.owner.phone}`}
+                  className="text-xs font-bold px-3 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                >
+                  Appeler
+                </a>
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSendMessage} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+                  Votre message :
+                </label>
+                <textarea
+                  rows={4}
+                  required
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  placeholder="Posez vos questions sur les dates, l'accès, le parking..."
+                  className="input text-sm resize-none"
+                  style={{ backgroundColor: 'var(--bg-secondary)' }}
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setContactModalOpen(false)}
+                  className="btn-secondary px-5 py-2.5 rounded-xl text-xs font-semibold"
+                >
+                  {t('common.cancel')}
+                </button>
+                <Button
+                  type="submit"
+                  loading={sendingMessage}
+                  className="btn-primary px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2"
+                >
+                  <Send className="w-3.5 h-3.5" /> Envoyer le message
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

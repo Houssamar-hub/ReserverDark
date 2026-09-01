@@ -116,27 +116,10 @@ export const createConversation = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Vérifier que l'utilisateur peut discuter avec ce participant
-    // Si propertyId est fourni, vérifier que l'utilisateur a une réservation ou est le propriétaire
     if (propertyId) {
       const property = await Property.findById(propertyId);
       if (!property) {
         return res.status(404).json({ message: 'Property not found' });
-      }
-
-      // Vérifier si l'utilisateur a une réservation pour cette propriété
-      const booking = await Booking.findOne({
-        property: propertyId,
-        $or: [
-          { client: req.user._id },
-          { owner: req.user._id },
-        ],
-      });
-
-      if (!booking && req.user.role !== 'admin') {
-        return res.status(403).json({ 
-          message: 'You must have a booking to chat with the owner/client' 
-        });
       }
     }
 
