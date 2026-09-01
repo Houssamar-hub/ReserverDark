@@ -28,6 +28,7 @@ const Sidebar = ({ role }) => {
     { to: '/owner/properties',        icon: Home,            label: t('nav.myProperties') },
     { to: '/owner/properties/add',    icon: PlusSquare,      label: t('nav.addProperty') },
     { to: '/owner/bookings',          icon: Calendar,        label: t('nav.bookings') },
+    { to: '/owner/messages',          icon: MessageSquare,   label: t('nav.messages') },
     { to: '/owner/calendar',          icon: Calendar,        label: t('nav.calendar') },
     { to: '/owner/revenue',           icon: CreditCard,      label: t('nav.revenue') },
     { to: '/owner/profile',           icon: User,            label: t('nav.profile') },

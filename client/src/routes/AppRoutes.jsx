@@ -95,6 +95,7 @@ function AppRoutes() {
           <Route path="/owner/properties/add" element={<AddProperty />} />
           <Route path="/owner/properties/:id/edit" element={<EditProperty />} />
           <Route path="/owner/bookings" element={<OwnerBookings />} />
+          <Route path="/owner/messages" element={<Messages />} />
           <Route path="/owner/calendar" element={<Calendar />} />
           <Route path="/owner/revenue" element={<Revenue />} />
           <Route path="/owner/profile" element={<OwnerProfile />} />
