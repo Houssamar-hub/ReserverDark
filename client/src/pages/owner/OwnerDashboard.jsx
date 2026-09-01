@@ -36,15 +36,15 @@ export default function OwnerDashboard() {
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-extrabold" style={{ color: 'var(--text-primary)' }}>
+          <h1 className="text-2xl sm:text-3xl font-extrabold" style={{ color: 'var(--text-primary)' }}>
             Bonjour, {user?.name?.split(' ')[0]}
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Tableau de bord propriétaire</p>
+          <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Tableau de bord propriétaire</p>
         </div>
-        <Link to="/owner/properties/add" className="btn-primary flex items-center gap-2 px-4 py-2 text-sm rounded-xl">
+        <Link to="/owner/properties/add" className="btn-primary flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap self-start sm:self-auto">
           <Plus className="w-4 h-4" /> {t('nav.addProperty')}
         </Link>
       </div>

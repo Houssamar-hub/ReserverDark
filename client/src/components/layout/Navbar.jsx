@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
@@ -11,7 +11,7 @@ const LANGS = [
   { code: "ar", label: "AR",       flag: "AR" },
 ];
 
-const Navbar = () => {
+const Navbar = ({ onToggleSidebar, isSidebarOpen }) => {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
@@ -54,16 +54,31 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 select-none">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: "var(--accent)" }}>
-              <Home className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-base tracking-tight" style={{ color: "var(--text-primary)" }}>
-              ReserverDark<span style={{ color: "var(--accent)" }}>.</span>
-            </span>
-          </Link>
+          {/* Left section: Sidebar toggle (if in dashboard on mobile) + Logo */}
+          <div className="flex items-center gap-2">
+            {onToggleSidebar && (
+              <button
+                type="button"
+                onClick={onToggleSidebar}
+                className="md:hidden p-2 rounded-xl border transition-colors hover:bg-gray-100 dark:hover:bg-white/10"
+                style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}
+                aria-label="Toggle Dashboard Menu"
+              >
+                {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            )}
+
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2 select-none">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: "var(--accent)" }}>
+                <Home className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-bold text-base tracking-tight" style={{ color: "var(--text-primary)" }}>
+                ReserverDark<span style={{ color: "var(--accent)" }}>.</span>
+              </span>
+            </Link>
+          </div>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-7">

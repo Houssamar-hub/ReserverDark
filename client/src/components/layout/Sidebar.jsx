@@ -7,12 +7,16 @@ import {
   FileText, LogOut, PlusSquare, User
 } from 'lucide-react';
 
-const Sidebar = ({ role }) => {
+const Sidebar = ({ role, isOpen, onClose }) => {
   const { t } = useTranslation();
   const { logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => { logout(); navigate('/login'); };
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+    onClose?.();
+  };
 
   const clientLinks = [
     { to: '/client',               icon: LayoutDashboard, label: t('nav.dashboard') },
@@ -48,38 +52,56 @@ const Sidebar = ({ role }) => {
   const links = role === 'admin' ? adminLinks : role === 'owner' ? ownerLinks : clientLinks;
 
   return (
-    <div className="fixed left-0 top-16 bottom-0 w-64 overflow-y-auto flex flex-col transition-colors duration-200"
-      style={{ backgroundColor: 'var(--bg-primary)', borderRight: '1px solid var(--border)' }}>
-      <div className="p-4 space-y-1 flex-1">
-        {links.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                isActive
-                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
-                  : 'hover:bg-slate-100 dark:hover:bg-white/10'
-              }`
-            }
-            style={({ isActive }) => (isActive ? {} : { color: 'var(--text-muted)' })}
-          >
-            <Icon className="w-4 h-4 flex-shrink-0" />
-            <span>{label}</span>
-          </NavLink>
-        ))}
-      </div>
+    <>
+      {/* Mobile Backdrop */}
+      {isOpen && (
+        <div
+          onClick={onClose}
+          className="fixed inset-0 bg-black/50 backdrop-blur-xs z-30 md:hidden transition-opacity"
+        />
+      )}
 
-      {/* Logout */}
-      <div className="p-4 border-t" style={{ borderColor: 'var(--border)' }}>
-        <button onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium w-full transition-all text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10">
-          <LogOut className="w-4 h-4" />
-          <span>{t('nav.logout')}</span>
-        </button>
+      {/* Sidebar Drawer */}
+      <div
+        className={`fixed left-0 top-16 bottom-0 w-64 overflow-y-auto flex flex-col transition-transform duration-300 z-40 md:translate-x-0 ${
+          isOpen ? 'translate-x-0 shadow-2xl md:shadow-none' : '-translate-x-full'
+        }`}
+        style={{ backgroundColor: 'var(--bg-primary)', borderRight: '1px solid var(--border)' }}
+      >
+        <div className="p-4 space-y-1 flex-1">
+          {links.map(({ to, icon: Icon, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                  isActive
+                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+                    : 'hover:bg-slate-100 dark:hover:bg-white/10'
+                }`
+              }
+              style={({ isActive }) => (isActive ? {} : { color: 'var(--text-muted)' })}
+            >
+              <Icon className="w-4 h-4 flex-shrink-0" />
+              <span>{label}</span>
+            </NavLink>
+          ))}
+        </div>
+
+        {/* Logout */}
+        <div className="p-4 border-t" style={{ borderColor: 'var(--border)' }}>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium w-full transition-all text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>{t('nav.logout')}</span>
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

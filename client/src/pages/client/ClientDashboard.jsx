@@ -54,13 +54,13 @@ export default function ClientDashboard() {
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
       {/* Welcome */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-extrabold" style={{ color: 'var(--text-primary)' }}>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-extrabold" style={{ color: 'var(--text-primary)' }}>
           Bonjour, {user?.name?.split(' ')[0]} 👋
         </h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Bienvenue sur votre tableau de bord</p>
+        <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Bienvenue sur votre tableau de bord</p>
       </div>
 
       {/* Stats */}
