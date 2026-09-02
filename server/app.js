@@ -20,6 +20,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import contactRoutes from "./routes/contactRoutes.js";
 
 dotenv.config();
 
@@ -105,6 +106,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/messages", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/contact", contactRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Health check
