@@ -11,7 +11,7 @@ import { authorizeRoles } from '../middleware/roleMiddleware.js';
 const router = express.Router();
 
 router.use(authenticateUser);
-router.use(authorizeRoles('client', 'admin'));
+router.use(authorizeRoles('client', 'owner', 'admin'));
 
 router.post('/', addFavorite);
 router.post('/:propertyId', addFavorite);
