@@ -4,11 +4,12 @@ import { useTranslation } from 'react-i18next';
 export default function About() {
   const { t } = useTranslation();
 
-  const team = [
-    { name: 'Youssef El Amrani', role: 'Fondateur & CEO', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200' },
-    { name: 'Fatima Zahra', role: 'Directrice Produit', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200' },
-    { name: 'Karim Benali', role: 'Directeur Technique', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200' },
-  ];
+  const leader = {
+    name: 'Houssam El Arsaoui',
+    role: 'Leader & Fondateur de ReserverDark',
+    bio: 'Passionné par l\'innovation technologique et le développement du tourisme au Maroc, menant la vision de ReserverDark pour offrir la meilleure expérience de réservation de logements.',
+    img: '/houssam.jpg',
+  };
 
   const features = [
     { icon: Shield, title: 'Paiements sécurisés', desc: 'Transactions 100% sécurisées avec protection acheteur.' },
@@ -34,7 +35,7 @@ export default function About() {
       {/* Stats */}
       <div className="py-16 border-b" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-secondary)' }}>
         <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {[['2022', 'Année de création'], ['500+', t('home.stats.properties')], ['10K+', t('home.stats.clients')], ['4.8', 'Note moyenne']].map(([val, label]) => (
+          {[['2024', 'Année de création'], ['500+', t('home.stats.properties')], ['10K+', t('home.stats.clients')], ['4.9', 'Note moyenne']].map(([val, label]) => (
             <div key={label}>
               <div className="text-4xl font-extrabold mb-1" style={{ color: 'var(--text-primary)' }}>{val}</div>
               <div className="text-sm font-semibold" style={{ color: 'var(--text-muted)' }}>{label}</div>
@@ -76,21 +77,40 @@ export default function About() {
         </div>
       </div>
 
-      {/* Team */}
-      <div className="py-20 max-w-6xl mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-3" style={{ color: 'var(--text-primary)' }}>Notre équipe</h2>
-        <p className="text-center mb-12 text-sm" style={{ color: 'var(--text-muted)' }}>Les personnes derrière ReserverDark</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-          {team.map(({ name, role, img }) => (
-            <div key={name} className="card p-6 text-center">
-              <img src={img} alt={name} className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-2 border-primary-500" />
-              <h3 className="font-bold mb-1" style={{ color: 'var(--text-primary)' }}>{name}</h3>
-              <p className="text-sm font-semibold text-primary-500">{role}</p>
-              <div className="flex justify-center gap-1 mt-3">
-                {[1,2,3,4,5].map(s => <Star key={s} className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />)}
-              </div>
-            </div>
-          ))}
+      {/* Leader & Founder Section */}
+      <div className="py-20 max-w-4xl mx-auto px-4">
+        <h2 className="text-3xl font-extrabold text-center mb-3" style={{ color: 'var(--text-primary)' }}>
+          Fondateur & Direction
+        </h2>
+        <p className="text-center mb-12 text-sm" style={{ color: 'var(--text-muted)' }}>
+          La personne derrière la vision de ReserverDark
+        </p>
+
+        <div
+          className="max-w-md mx-auto card p-8 text-center rounded-3xl border shadow-lg hover:shadow-xl transition-all group"
+          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
+        >
+          <div className="relative w-40 h-40 mx-auto mb-6">
+            <img
+              src={leader.img}
+              alt={leader.name}
+              className="w-full h-full rounded-full object-cover shadow-lg border-4 border-blue-600 transition-transform duration-300 group-hover:scale-105"
+            />
+          </div>
+          <h3 className="text-2xl font-extrabold mb-1" style={{ color: 'var(--text-primary)' }}>
+            {leader.name}
+          </h3>
+          <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mb-3">
+            {leader.role}
+          </p>
+          <p className="text-xs leading-relaxed max-w-xs mx-auto mb-5" style={{ color: 'var(--text-muted)' }}>
+            {leader.bio}
+          </p>
+          <div className="flex justify-center gap-1.5">
+            {[1, 2, 3, 4, 5].map(s => (
+              <Star key={s} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+            ))}
+          </div>
         </div>
       </div>
     </div>
