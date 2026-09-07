@@ -1,11 +1,16 @@
-﻿const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80';
+const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80';
 
 export function formatImageUrl(url, fallback = DEFAULT_FALLBACK_IMAGE) {
   if (!url || typeof url !== 'string' || url.trim() === '') {
     return fallback;
   }
 
-  const cleanUrl = url.trim();
+  let cleanUrl = url.trim();
+
+  // Fix malformed Unsplash domains (e.g. imagesunsplashcom)
+  if (cleanUrl.includes('imagesunsplashcom')) {
+    cleanUrl = cleanUrl.replace('imagesunsplashcom', 'images.unsplash.com');
+  }
 
   // If already absolute URL
   if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
