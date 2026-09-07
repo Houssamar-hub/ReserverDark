@@ -85,8 +85,22 @@ export const getProperties = async (req, res) => {
       filter.status = { $ne: 'rejected' };
     }
 
+    // Keyword search filter (title, city, description, address, location)
+    if (req.query.search && req.query.search.trim()) {
+      const s = req.query.search.trim();
+      const sRegex = { $regex: s, $options: 'i' };
+      filter.$or = [
+        { title: sRegex },
+        { city: sRegex },
+        { description: sRegex },
+        { address: sRegex },
+        { location: sRegex },
+        { type: sRegex },
+      ];
+    }
+
     // City filter
-    if (city) {
+    if (city && !req.query.search) {
       filter.city = { $regex: city, $options: 'i' };
     }
 
