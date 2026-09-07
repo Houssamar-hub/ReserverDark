@@ -13,7 +13,7 @@ const router = express.Router();
 router.get('/property/:propertyId', getPropertyReviews);
 
 // Protected - Create review
-router.post('/', authenticateUser, authorizeRoles('client', 'admin'), createReview);
+router.post('/', authenticateUser, authorizeRoles('client', 'owner', 'admin'), createReview);
 
 // Admin - Delete review
 router.delete('/:id', authenticateUser, authorizeRoles('admin'), deleteReview);

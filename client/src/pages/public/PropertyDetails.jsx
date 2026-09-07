@@ -13,6 +13,7 @@ import { formatPrice } from '../../utils/formatPrice';
 import { formatImageUrl, handleImageError } from '../../utils/formatImage';
 import Rating from '../../components/review/Rating';
 import ReviewCard from '../../components/review/ReviewCard';
+import ReviewForm from '../../components/review/ReviewForm';
 import Button from '../../components/common/Button';
 import Spinner from '../../components/common/Spinner';
 import toast from 'react-hot-toast';
@@ -36,6 +37,7 @@ const PropertyDetails = () => {
     guests: 1,
   });
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [reviewLoading, setReviewLoading] = useState(false);
 
   useEffect(() => {
     fetchProperty();
@@ -174,6 +176,29 @@ const PropertyDetails = () => {
     }
   };
 
+  const handleReviewSubmit = async ({ rating, comment }) => {
+    if (!user) {
+      toast.error('Connectez-vous pour laisser un avis');
+      navigate('/login');
+      return;
+    }
+
+    setReviewLoading(true);
+    try {
+      await api.post('/reviews', {
+        propertyId: id,
+        rating,
+        comment,
+      });
+      toast.success('Avis publié avec succès !');
+      fetchProperty();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Erreur lors de la publication de l\'avis');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -288,7 +313,35 @@ const PropertyDetails = () => {
 
             {/* Reviews */}
             <div>
-              <h2 className="text-xl font-bold mb-3" style={{ color: 'var(--text-primary)' }}>{t('property.reviews')}</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{t('property.reviews')}</h2>
+                {property.averageRating > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Rating value={Math.round(property.averageRating)} size="sm" />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      {property.averageRating.toFixed(1)} ({property.reviews?.length || 0})
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Review Submission Form if logged in */}
+              {user ? (
+                <ReviewForm onSubmit={handleReviewSubmit} loading={reviewLoading} />
+              ) : (
+                <div 
+                  className="p-4 rounded-xl border mb-6 text-center text-sm"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                >
+                  <button 
+                    onClick={() => navigate('/login')}
+                    className="text-primary-500 font-semibold hover:underline"
+                  >
+                    Connectez-vous
+                  </button> pour laisser un avis sur ce logement.
+                </div>
+              )}
+
               {property.reviews?.length > 0 ? (
                 <div className="space-y-4">
                   {property.reviews.map((review) => (
