@@ -5,48 +5,43 @@ import Property from '../models/Property.js';
 // @desc    Create review
 // @route   POST /api/reviews
 // @access  Private (Client only)
+// @desc    Create review
+// @route   POST /api/reviews
+// @access  Private (Client only)
 export const createReview = async (req, res) => {
   try {
-    const { bookingId, rating, comment } = req.body;
+    const { propertyId, bookingId, rating, comment } = req.body;
 
-    // Check booking exists and is completed
-    const booking = await Booking.findById(bookingId)
-      .populate('property');
-
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+    let targetPropertyId = propertyId;
+    if (bookingId && !targetPropertyId) {
+      const booking = await Booking.findById(bookingId);
+      if (booking) targetPropertyId = booking.property;
     }
 
-    // Check if user is the client
-    if (booking.client.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized to review this booking' });
+    if (!targetPropertyId) {
+      return res.status(400).json({ message: 'Property ID is required' });
     }
 
-    // Check if booking is completed
-    if (booking.status !== 'completed') {
-      return res.status(400).json({ message: 'Can only review completed bookings' });
-    }
-
-    // Check if review already exists
-    const existingReview = await Review.findOne({ booking: bookingId });
-    if (existingReview) {
-      return res.status(400).json({ message: 'You have already reviewed this booking' });
+    // Verify property exists
+    const property = await Property.findById(targetPropertyId);
+    if (!property) {
+      return res.status(404).json({ message: 'Property not found' });
     }
 
     // Create review
     const review = await Review.create({
       client: req.user._id,
-      property: booking.property._id,
-      booking: bookingId,
-      rating,
-      comment,
+      property: targetPropertyId,
+      booking: bookingId || null,
+      rating: Number(rating) || 5,
+      comment: comment || '',
     });
 
     // Update property average rating
-    const reviews = await Review.find({ property: booking.property._id });
+    const reviews = await Review.find({ property: targetPropertyId });
     const averageRating = reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviews.length;
 
-    await Property.findByIdAndUpdate(booking.property._id, {
+    await Property.findByIdAndUpdate(targetPropertyId, {
       averageRating: Math.round(averageRating * 10) / 10,
     });
 

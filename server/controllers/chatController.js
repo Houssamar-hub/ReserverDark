@@ -63,7 +63,11 @@ export const getMessages = async (req, res) => {
       return res.status(404).json({ message: 'Conversation not found' });
     }
 
-    if (!conversation.participants.includes(req.user._id)) {
+    const isParticipant = (conversation.participants || []).some(
+      (p) => (p._id || p).toString() === req.user._id.toString()
+    );
+
+    if (!isParticipant) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -131,6 +135,7 @@ export const createConversation = async (req, res) => {
     if (!conversation) {
       conversation = await Conversation.create({
         participants: [req.user._id, participantId],
+        property: propertyId || null,
       });
     }
 
@@ -162,7 +167,11 @@ export const sendMessage = async (req, res) => {
       return res.status(404).json({ message: 'Conversation not found' });
     }
 
-    if (!conversation.participants.includes(req.user._id)) {
+    const isParticipant = (conversation.participants || []).some(
+      (p) => (p._id || p).toString() === req.user._id.toString()
+    );
+
+    if (!isParticipant) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 

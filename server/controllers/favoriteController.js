@@ -2,11 +2,15 @@ import Favorite from '../models/Favorite.js';
 import Property from '../models/Property.js';
 
 // @desc    Add property to favorites
-// @route   POST /api/favorites
+// @route   POST /api/favorites OR POST /api/favorites/:propertyId
 // @access  Private (Client only)
 export const addFavorite = async (req, res) => {
   try {
-    const { propertyId } = req.body;
+    const propertyId = req.body?.propertyId || req.params?.propertyId;
+
+    if (!propertyId) {
+      return res.status(400).json({ message: 'Property ID is required' });
+    }
 
     // Check property exists and is approved
     const property = await Property.findById(propertyId);
@@ -14,21 +18,17 @@ export const addFavorite = async (req, res) => {
       return res.status(404).json({ message: 'Property not found' });
     }
 
-    if (property.status !== 'approved') {
-      return res.status(400).json({ message: 'Property is not available' });
-    }
-
     // Check if already favorited
-    const existing = await Favorite.findOne({
+    let favorite = await Favorite.findOne({
       client: req.user._id,
       property: propertyId,
     });
 
-    if (existing) {
-      return res.status(400).json({ message: 'Property already in favorites' });
+    if (favorite) {
+      return res.status(200).json({ message: 'Property already in favorites', favorite });
     }
 
-    const favorite = await Favorite.create({
+    favorite = await Favorite.create({
       client: req.user._id,
       property: propertyId,
     });
@@ -47,9 +47,14 @@ export const addFavorite = async (req, res) => {
 // @access  Private (Client only)
 export const removeFavorite = async (req, res) => {
   try {
+    const targetId = req.params.propertyId;
+
     const favorite = await Favorite.findOneAndDelete({
       client: req.user._id,
-      property: req.params.propertyId,
+      $or: [
+        { property: targetId },
+        { _id: targetId }
+      ]
     });
 
     if (!favorite) {

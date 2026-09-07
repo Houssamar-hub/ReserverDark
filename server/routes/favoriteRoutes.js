@@ -14,8 +14,10 @@ router.use(authenticateUser);
 router.use(authorizeRoles('client', 'admin'));
 
 router.post('/', addFavorite);
+router.post('/:propertyId', addFavorite);
 router.delete('/:propertyId', removeFavorite);
 router.get('/', getFavorites);
+router.get('/my', getFavorites);
 router.get('/check/:propertyId', checkFavorite);
 
 export default router;
