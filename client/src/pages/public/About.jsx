@@ -8,7 +8,7 @@ export default function About() {
     name: 'Houssam El Arsaoui',
     role: 'Leader & Fondateur de ReserverDark',
     bio: 'Passionné par l\'innovation technologique et le développement du tourisme au Maroc, menant la vision de ReserverDark pour offrir la meilleure expérience de réservation de logements.',
-    img: '/houssam.jpg',
+    img: '/image/houssam.jpg',
   };
 
   const features = [
