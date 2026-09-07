@@ -1,4 +1,4 @@
-﻿# 🏡 ReserverDark — Plateforme de Location Courte Durée au Maroc
+# 🏡 ReserverDark — Plateforme de Location Courte Durée au Maroc
 
 <div align="center">
 
@@ -160,7 +160,7 @@ sequenceDiagram
     participant Frontend as 🖥️ Frontend ReserverDark
     participant Backend as ⚙️ API Express
     participant DB as 🗄️ MongoDB
-    actor Propriétaire as 🏠 Propriétaire (Hôte)
+    actor Proprietaire as 🏠 Propriétaire (Hôte)
 
     Voyageur->>Frontend: Sélectionne les dates & clique sur "Réserver"
     Frontend->>Backend: POST /api/bookings (checkIn, checkOut, guests)
@@ -170,14 +170,14 @@ sequenceDiagram
     Backend-->>Frontend: 201 Created (Réservation en attente)
     Frontend-->>Voyageur: Affiche confirmation de demande
 
-    Backend->)Propriétaire: Notification temps réel (Nouvelle demande de réservation)
-    Propriétaire->>Frontend: Ouvre l'espace "Réservations" (/owner/bookings)
-    Propriétaire->>Frontend: Clique sur "Confirmer la réservation"
+    Backend-->>Proprietaire: Notification temps réel (Nouvelle demande de réservation)
+    Proprietaire->>Frontend: Ouvre l'espace "Réservations" (/owner/bookings)
+    Proprietaire->>Frontend: Clique sur "Confirmer la réservation"
     Frontend->>Backend: PATCH /api/bookings/:id/status { status: "confirmed" }
     Backend->>DB: Met à jour le statut en "confirmed"
     Backend->>DB: Notifie le voyageur (Booking Confirmed)
     Backend-->>Frontend: 200 OK
-    Frontend-->>Propriétaire: Met à jour les gains et le calendrier
+    Frontend-->>Proprietaire: Met à jour les gains et le calendrier
 ```
 
 ---
