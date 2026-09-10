@@ -53,18 +53,18 @@ const Sidebar = ({ role, isOpen, onClose }) => {
 
   return (
     <>
-      {/* Mobile Backdrop */}
+      {/* Mobile & Tablet Backdrop */}
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 bg-black/50 backdrop-blur-xs z-30 md:hidden transition-opacity"
+          className="fixed inset-0 bg-black/50 backdrop-blur-xs z-30 lg:hidden transition-opacity"
         />
       )}
 
       {/* Sidebar Drawer */}
       <div
-        className={`fixed left-0 top-16 bottom-0 w-64 overflow-y-auto flex flex-col transition-transform duration-300 z-40 md:translate-x-0 ${
-          isOpen ? 'translate-x-0 shadow-2xl md:shadow-none' : '-translate-x-full'
+        className={`fixed left-0 top-16 bottom-0 w-64 overflow-y-auto flex flex-col transition-transform duration-300 z-40 lg:translate-x-0 ${
+          isOpen ? 'translate-x-0 shadow-2xl lg:shadow-none' : '-translate-x-full'
         }`}
         style={{ backgroundColor: 'var(--bg-primary)', borderRight: '1px solid var(--border)' }}
       >

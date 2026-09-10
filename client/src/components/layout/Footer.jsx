@@ -49,9 +49,8 @@ const Footer = () => {
 
   const contactItems = [
     { Icon: MapPin,  text: '123 Bd Mohammed V, Casablanca, Maroc' },
-    { Icon: Mail,    text: 'contact@reserverdark.ma', href: 'mailto:contact@reserverdark.ma' },
-    { Icon: Phone,   text: '+212 600 000 000',        href: 'tel:+212600000000' },
-    { Icon: Printer, text: '+212 522 000 000' },
+    { Icon: Mail,    text: 'pchossam11@gmail.com', href: 'mailto:pchossam11@gmail.com' },
+    { Icon: Phone,   text: '0614351030',           href: 'tel:+212614351030' },
   ];
 
   const socials = [

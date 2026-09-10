@@ -18,7 +18,7 @@ const AdminLayout = () => {
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
         />
-        <main className="flex-1 md:ml-64 mt-16 min-h-[calc(100vh-64px)] w-full overflow-x-hidden"
+        <main className="flex-1 lg:ml-64 mt-16 min-h-[calc(100vh-64px)] w-full overflow-x-hidden"
           style={{ backgroundColor: 'var(--bg-secondary)' }}>
           <Outlet />
         </main>

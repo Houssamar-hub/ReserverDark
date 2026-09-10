@@ -135,14 +135,14 @@ export default function HomePage() {
 
             {/* Right image */}
             <div className="relative hidden md:block">
-              <div className="relative rounded-3xl overflow-hidden" style={{ height: "560px" }}>
+              <div className="relative rounded-3xl overflow-hidden h-[420px] lg:h-[560px]">
                 <img
                   src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=900&q=85"
                   alt="Propriete"
                   className="w-full h-full object-cover"
                 />
                 {/* Stats card */}
-                <div className="absolute bottom-6 left-6 right-6 rounded-2xl px-5 py-4 flex items-center justify-around"
+                <div className="absolute bottom-4 lg:bottom-6 left-4 lg:left-6 right-4 lg:right-6 rounded-2xl px-4 lg:px-5 py-3 lg:py-4 flex items-center justify-around"
                   style={{ backgroundColor: "rgba(255,255,255,0.94)", backdropFilter: "blur(12px)" }}>
                   {[
                     { label: "Proprietes", value: "1 000+" },
@@ -150,8 +150,8 @@ export default function HomePage() {
                     { label: "Clients", value: "15K+" },
                   ].map((s, i) => (
                     <div key={s.label} className="text-center">
-                      <div className="text-xl font-bold" style={{ color: "var(--accent)" }}>{s.value}</div>
-                      <div className="text-xs" style={{ color: "#64748b" }}>{s.label}</div>
+                      <div className="text-lg lg:text-xl font-bold" style={{ color: "var(--accent)" }}>{s.value}</div>
+                      <div className="text-[11px] lg:text-xs" style={{ color: "#64748b" }}>{s.label}</div>
                     </div>
                   ))}
                 </div>
