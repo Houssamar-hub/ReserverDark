@@ -28,8 +28,18 @@ export const createBooking = async (req, res) => {
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const checkInZero = new Date(checkInDate);
+    checkInZero.setHours(0, 0, 0, 0);
+
+    if (checkInZero < today) {
+      return res.status(400).json({ message: "La date d'arrivée ne peut pas être dans le passé" });
+    }
+
     if (checkInDate >= checkOutDate) {
-      return res.status(400).json({ message: 'Check-out must be after check-in' });
+      return res.status(400).json({ message: "La date de départ doit être postérieure à la date d'arrivée" });
     }
 
     // Check if dates are available

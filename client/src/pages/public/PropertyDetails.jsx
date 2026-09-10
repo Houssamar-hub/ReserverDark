@@ -93,6 +93,52 @@ const PropertyDetails = () => {
     }
   };
 
+  const getTodayDateString = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getMinCheckOutDate = (checkInDateStr) => {
+    if (!checkInDateStr) return getTodayDateString();
+    const date = new Date(checkInDateStr);
+    date.setDate(date.getDate() + 1);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const todayStr = getTodayDateString();
+  const minCheckOutStr = getMinCheckOutDate(bookingData.checkIn);
+
+  const calculateNights = () => {
+    if (!bookingData.checkIn || !bookingData.checkOut) return 0;
+    const start = new Date(bookingData.checkIn);
+    const end = new Date(bookingData.checkOut);
+    const diff = end - start;
+    if (diff <= 0) return 0;
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
+
+  const nights = calculateNights();
+  const totalPrice = nights * (property?.pricePerNight || 0);
+
+  const handleCheckInChange = (e) => {
+    const newCheckIn = e.target.value;
+    const nextDay = getMinCheckOutDate(newCheckIn);
+    setBookingData((prev) => {
+      const shouldUpdateCheckOut = !prev.checkOut || prev.checkOut <= newCheckIn;
+      return {
+        ...prev,
+        checkIn: newCheckIn,
+        checkOut: shouldUpdateCheckOut ? nextDay : prev.checkOut,
+      };
+    });
+  };
+
   const handleBooking = async (e) => {
     e.preventDefault();
     if (!user) {
@@ -104,6 +150,22 @@ const PropertyDetails = () => {
       toast.error('Vous ne pouvez pas réserver en tant que propriétaire');
       return;
     }
+
+    if (!bookingData.checkIn || !bookingData.checkOut) {
+      toast.error('Veuillez sélectionner les dates d\'arrivée et de départ');
+      return;
+    }
+
+    if (bookingData.checkIn < todayStr) {
+      toast.error('La date d\'arrivée ne peut pas être dans le passé');
+      return;
+    }
+
+    if (bookingData.checkOut <= bookingData.checkIn) {
+      toast.error('La date de départ doit être postérieure à la date d\'arrivée');
+      return;
+    }
+
     setBookingLoading(true);
     try {
       await api.post('/bookings', {
@@ -371,8 +433,9 @@ const PropertyDetails = () => {
                   </label>
                   <input
                     type="date"
+                    min={todayStr}
                     value={bookingData.checkIn}
-                    onChange={(e) => setBookingData({ ...bookingData, checkIn: e.target.value })}
+                    onChange={handleCheckInChange}
                     className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
                     style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                     required
@@ -384,6 +447,7 @@ const PropertyDetails = () => {
                   </label>
                   <input
                     type="date"
+                    min={minCheckOutStr}
                     value={bookingData.checkOut}
                     onChange={(e) => setBookingData({ ...bookingData, checkOut: e.target.value })}
                     className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
@@ -407,6 +471,22 @@ const PropertyDetails = () => {
                     required
                   />
                 </div>
+
+                {/* Price Breakdown */}
+                {nights > 0 && (
+                  <div className="p-3.5 rounded-xl border space-y-2 text-xs"
+                    style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border)' }}>
+                    <div className="flex items-center justify-between" style={{ color: 'var(--text-muted)' }}>
+                      <span>{formatPrice(property.pricePerNight)} × {nights} nuit{nights > 1 ? 's' : ''}</span>
+                      <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{formatPrice(totalPrice)}</span>
+                    </div>
+                    <div className="flex items-center justify-between font-bold pt-2 border-t text-sm"
+                      style={{ borderColor: 'var(--border)', color: 'var(--accent)' }}>
+                      <span>Total estimé</span>
+                      <span>{formatPrice(totalPrice)}</span>
+                    </div>
+                  </div>
+                )}
 
                 <Button
                   type="submit"
