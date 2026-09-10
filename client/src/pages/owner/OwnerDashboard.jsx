@@ -4,7 +4,7 @@ import {
   Home, Calendar, TrendingUp, Clock, Plus,
   User, Phone, Mail, MapPin, Check, X,
   Search, CheckCircle2, AlertCircle, BarChart3,
-  DollarSign, ArrowUpRight
+  DollarSign, ArrowUpRight, Download
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Spinner from '../../components/common/Spinner';
