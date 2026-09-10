@@ -5,14 +5,18 @@ import {
   Building2, Download, Clock
 } from 'lucide-react';
 import Spinner from '../../components/common/Spinner';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
+import { generateReportPdf } from '../../utils/generateReportPdf';
+import toast from 'react-hot-toast';
 
 const MONTH_NAMES = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
 
 export default function Revenue() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [properties, setProperties] = useState([]);
@@ -38,6 +42,15 @@ export default function Revenue() {
       // ignore
     } finally {
       setLoading(false);
+    }
+  };
+
+  const exportFinancialReport = () => {
+    try {
+      generateReportPdf({ user, stats, bookings });
+      toast.success('Rapport PDF généré avec succès !');
+    } catch (err) {
+      toast.error(err.message || 'Erreur lors de la génération du rapport PDF');
     }
   };
 
@@ -107,10 +120,10 @@ export default function Revenue() {
         </div>
 
         <button
-          onClick={() => alert('Export du relevé financier téléchargé (simulation CSV)')}
-          className="btn-secondary flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold self-start sm:self-auto"
+          onClick={exportFinancialReport}
+          className="btn-secondary flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold self-start sm:self-auto hover:border-blue-500 transition-all shadow-xs"
         >
-          <Download className="w-4 h-4" /> Exporter le rapport
+          <Download className="w-4 h-4" style={{ color: 'var(--accent)' }} /> Exporter le rapport
         </button>
       </div>
 

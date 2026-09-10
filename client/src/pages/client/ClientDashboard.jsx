@@ -58,7 +58,7 @@ export default function ClientDashboard() {
       {/* Welcome */}
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-extrabold" style={{ color: 'var(--text-primary)' }}>
-          Bonjour, {user?.name?.split(' ')[0]} 👋
+          Bonjour, {user?.name?.split(' ')[0]}
         </h1>
         <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Bienvenue sur votre tableau de bord</p>
       </div>

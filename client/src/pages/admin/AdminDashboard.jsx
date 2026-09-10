@@ -80,7 +80,7 @@ export default function AdminDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold" style={{ color: 'var(--text-primary)' }}>
-            Tableau de bord Administrateur 👑
+            Tableau de bord Administrateur
           </h1>
           <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Vue d'ensemble de la plateforme ReserverDark : utilisateurs, annonces et réservations.

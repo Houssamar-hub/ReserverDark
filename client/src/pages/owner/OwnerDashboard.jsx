@@ -13,6 +13,7 @@ import api from '../../services/api';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
 import { formatImageUrl, handleImageError } from '../../utils/formatImage';
+import { generateReportPdf } from '../../utils/generateReportPdf';
 import toast from 'react-hot-toast';
 
 const MONTH_NAMES = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
@@ -67,6 +68,15 @@ export default function OwnerDashboard() {
       toast.error(err.response?.data?.message || t('common.error'));
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const exportFinancialReport = () => {
+    try {
+      generateReportPdf({ user, stats, bookings });
+      toast.success('Rapport PDF généré avec succès !');
+    } catch (err) {
+      toast.error(err.message || 'Erreur lors de la génération du rapport PDF');
     }
   };
 
@@ -134,7 +144,7 @@ export default function OwnerDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold" style={{ color: 'var(--text-primary)' }}>
-            Bonjour, {user?.name?.split(' ')[0]} 👋
+            Bonjour, {user?.name?.split(' ')[0]}
           </h1>
           <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Voici les statistiques de vos réservations et l'activité de vos logements pour {currentYear}.
@@ -142,6 +152,13 @@ export default function OwnerDashboard() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={exportFinancialReport}
+            className="btn-secondary flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold self-start sm:self-auto hover:border-blue-500 transition-all shadow-xs"
+          >
+            <Download className="w-4 h-4" style={{ color: 'var(--accent)' }} /> Exporter le rapport
+          </button>
           <Link
             to="/owner/properties/add"
             className="btn-primary flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap shadow-sm"
