@@ -1,6 +1,7 @@
 import Booking from '../models/Booking.js';
 import Property from '../models/Property.js';
 import Notification from '../models/Notification.js';
+import { emitToUser, emitToRole, broadcastEvent } from '../config/socket.js';
 
 // @desc    Create booking
 // @route   POST /api/bookings
@@ -76,17 +77,30 @@ export const createBooking = async (req, res) => {
       status: 'pending',
     });
 
+    // Populate full booking object for real-time dispatch
+    const populatedBooking = await Booking.findById(booking._id)
+      .populate('property', 'title images location city pricePerNight maxGuests')
+      .populate('client', 'name avatar email phone')
+      .populate('owner', 'name avatar email phone');
+
     // Create notification for owner
-    await Notification.create({
+    const notification = await Notification.create({
       user: property.owner,
-      title: 'New Booking Request',
-      message: `${req.user.name} wants to book ${property.title}`,
+      title: 'Nouvelle demande de réservation',
+      message: `${req.user.name} souhaite réserver ${property.title}`,
       type: 'booking_created',
     });
 
+    const notifObj = { ...notification.toObject(), read: false };
+
+    // Emit Real-Time Socket Events
+    emitToUser(property.owner.toString(), 'booking:new', populatedBooking);
+    emitToUser(property.owner.toString(), 'notification:new', notifObj);
+    emitToRole('admin', 'booking:new', populatedBooking);
+
     res.status(201).json({
       message: 'Booking request created successfully',
-      booking,
+      booking: populatedBooking,
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -100,8 +114,8 @@ export const getMyBookings = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 0;
     const bookings = await Booking.find({ client: req.user._id })
-      .populate('property', 'title images location city')
-      .populate('owner', 'name avatar')
+      .populate('property', 'title images location city pricePerNight')
+      .populate('owner', 'name avatar email phone')
       .sort({ createdAt: -1 })
       .limit(limit);
 
@@ -117,7 +131,7 @@ export const getMyBookings = async (req, res) => {
 export const getOwnerBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({ owner: req.user._id })
-      .populate('property', 'title images location city')
+      .populate('property', 'title images location city pricePerNight')
       .populate('client', 'name avatar email phone')
       .sort({ createdAt: -1 });
 
@@ -134,16 +148,19 @@ export const updateBookingStatus = async (req, res) => {
   try {
     const { status } = req.body;
     const booking = await Booking.findById(req.params.id)
-      .populate('property', 'title')
-      .populate('client', 'name');
+      .populate('property', 'title images location city pricePerNight')
+      .populate('client', 'name avatar email phone')
+      .populate('owner', 'name avatar email phone');
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
     // Check if user is owner or admin
-    if (booking.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Not authorized' });
+    if (booking.owner._id ? booking.owner._id.toString() !== req.user._id.toString() : booking.owner.toString() !== req.user._id.toString()) {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: 'Not authorized' });
+      }
     }
 
     booking.status = status;
@@ -156,32 +173,43 @@ export const updateBookingStatus = async (req, res) => {
 
     switch (status) {
       case 'confirmed':
-        notificationTitle = 'Booking Confirmed';
-        notificationMessage = `Your booking for ${booking.property.title} has been confirmed`;
+        notificationTitle = 'Réservation confirmée';
+        notificationMessage = `Votre réservation pour ${booking.property?.title || 'le logement'} a été confirmée !`;
         notificationType = 'booking_confirmed';
         break;
       case 'rejected':
-        notificationTitle = 'Booking Rejected';
-        notificationMessage = `Your booking for ${booking.property.title} has been rejected`;
+        notificationTitle = 'Réservation refusée';
+        notificationMessage = `Votre réservation pour ${booking.property?.title || 'le logement'} a été refusée.`;
         notificationType = 'booking_rejected';
         break;
       case 'cancelled':
-        notificationTitle = 'Booking Cancelled';
-        notificationMessage = `Your booking for ${booking.property.title} has been cancelled`;
+        notificationTitle = 'Réservation annulée';
+        notificationMessage = `La réservation pour ${booking.property?.title || 'le logement'} a été annulée.`;
         notificationType = 'booking_cancelled';
         break;
       default:
-        notificationTitle = 'Booking Updated';
-        notificationMessage = `Your booking status has been updated to ${status}`;
+        notificationTitle = 'Mise à jour de réservation';
+        notificationMessage = `Le statut de votre réservation a été mis à jour : ${status}`;
         notificationType = 'booking_created';
     }
 
-    await Notification.create({
-      user: booking.client,
+    const clientId = booking.client?._id ? booking.client._id.toString() : booking.client.toString();
+    const ownerId = booking.owner?._id ? booking.owner._id.toString() : booking.owner.toString();
+
+    const notification = await Notification.create({
+      user: clientId,
       title: notificationTitle,
       message: notificationMessage,
       type: notificationType,
     });
+
+    const notifObj = { ...notification.toObject(), read: false };
+
+    // Emit real-time events to client, owner, and admin
+    emitToUser(clientId, 'booking:updated', booking);
+    emitToUser(clientId, 'notification:new', notifObj);
+    emitToUser(ownerId, 'booking:updated', booking);
+    emitToRole('admin', 'booking:updated', booking);
 
     res.status(200).json({
       message: `Booking ${status} successfully`,
@@ -197,14 +225,20 @@ export const updateBookingStatus = async (req, res) => {
 // @access  Private (Client only)
 export const cancelBooking = async (req, res) => {
   try {
-    const booking = await Booking.findById(req.params.id);
+    const booking = await Booking.findById(req.params.id)
+      .populate('property', 'title images location city pricePerNight')
+      .populate('client', 'name avatar email phone')
+      .populate('owner', 'name avatar email phone');
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
+    const clientId = booking.client?._id ? booking.client._id.toString() : booking.client.toString();
+    const ownerId = booking.owner?._id ? booking.owner._id.toString() : booking.owner.toString();
+
     // Check if user is client or admin
-    if (booking.client.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (clientId !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -214,14 +248,22 @@ export const cancelBooking = async (req, res) => {
       await booking.save();
 
       // Notify owner
-      await Notification.create({
-        user: booking.owner,
-        title: 'Booking Cancelled',
-        message: `Booking for ${booking.property.title} has been cancelled by client`,
+      const notification = await Notification.create({
+        user: ownerId,
+        title: 'Réservation annulée',
+        message: `La réservation pour ${booking.property?.title || 'le logement'} a été annulée par le voyageur`,
         type: 'booking_cancelled',
       });
 
-      res.status(200).json({ message: 'Booking cancelled successfully' });
+      const notifObj = { ...notification.toObject(), read: false };
+
+      // Emit real-time events
+      emitToUser(ownerId, 'booking:updated', booking);
+      emitToUser(ownerId, 'notification:new', notifObj);
+      emitToUser(clientId, 'booking:updated', booking);
+      emitToRole('admin', 'booking:updated', booking);
+
+      res.status(200).json({ message: 'Booking cancelled successfully', booking });
     } else {
       res.status(400).json({ message: `Cannot cancel booking with status: ${booking.status}` });
     }

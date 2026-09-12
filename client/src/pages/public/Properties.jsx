@@ -6,7 +6,8 @@ import PropertyCard from '../../components/property/PropertyCard';
 import Spinner from '../../components/common/Spinner';
 import api from '../../services/api';
 
-const CITIES = ['Casablanca', 'Marrakech', 'Rabat', 'Agadir', 'Fès', 'Tanger', 'Meknès', 'Oujda', 'Tétouan', 'Essaouira'];
+const CITIES = ['Casablanca', 'Marrakech', 'Rabat', 'Agadir', 'Fès', 'Tanger', 'Ifrane', 'Meknès', 'Oujda', 'Tétouan', 'Essaouira'];
+const PROPERTY_TYPES = ['Appartement', 'Villa', 'Maison', 'Studio', 'Riad'];
 const AMENITIES = ['WiFi', 'Piscine', 'Climatisation', 'Cuisine', 'Parking', 'Jardin'];
 
 export default function Properties() {
@@ -18,6 +19,7 @@ export default function Properties() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || searchParams.get('q') || '');
   const [filters, setFilters] = useState({
     city: searchParams.get('city') || '',
+    type: searchParams.get('type') || '',
     minPrice: '',
     maxPrice: '',
     bedrooms: '',
@@ -26,11 +28,21 @@ export default function Properties() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
 
+  // Sync state when URL search params change (e.g. from Home search or city pill click)
+  useEffect(() => {
+    const urlCity = searchParams.get('city') || '';
+    const urlType = searchParams.get('type') || '';
+    const urlSearch = searchParams.get('search') || searchParams.get('q') || '';
+    setFilters(f => ({ ...f, city: urlCity, type: urlType }));
+    setSearchQuery(urlSearch);
+    setPage(1);
+  }, [searchParams]);
+
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchProperties();
-    }, 250);
+    }, 200);
     return () => clearTimeout(timer);
   }, [filters, page, searchQuery]);
 
@@ -40,6 +52,7 @@ export default function Properties() {
       const params = new URLSearchParams({ page, limit: 12 });
       if (searchQuery.trim()) params.append('search', searchQuery.trim());
       if (filters.city) params.append('city', filters.city);
+      if (filters.type) params.append('type', filters.type);
       if (filters.minPrice) params.append('minPrice', filters.minPrice);
       if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
       if (filters.bedrooms) params.append('bedrooms', filters.bedrooms);
@@ -64,13 +77,15 @@ export default function Properties() {
   };
 
   const clearFilters = () => {
-    setFilters({ city: '', minPrice: '', maxPrice: '', bedrooms: '', amenities: [] });
+    setFilters({ city: '', type: '', minPrice: '', maxPrice: '', bedrooms: '', amenities: [] });
     setSearchQuery('');
+    setSearchParams({});
     setPage(1);
   };
 
   const activeFiltersCount = 
     (filters.city ? 1 : 0) +
+    (filters.type ? 1 : 0) +
     (filters.minPrice ? 1 : 0) +
     (filters.maxPrice ? 1 : 0) +
     (filters.bedrooms ? 1 : 0) +
@@ -182,7 +197,7 @@ export default function Properties() {
             </div>
 
             {/* Filter Controls Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
                 <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>
                   {t('common.city')}
@@ -195,6 +210,21 @@ export default function Properties() {
                 >
                   <option value="">{t('common.all')}</option>
                   {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>
+                  Type de bien
+                </label>
+                <select
+                  value={filters.type}
+                  onChange={e => { setFilters(f => ({ ...f, type: e.target.value })); setPage(1); }}
+                  className="w-full px-3 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                >
+                  <option value="">Tous les types</option>
+                  {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
 

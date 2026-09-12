@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Calendar, Heart, MessageSquare, Bell, Home, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
 import Spinner from '../../components/common/Spinner';
 import api from '../../services/api';
 import { formatDate } from '../../utils/formatDate';
@@ -10,11 +11,12 @@ import { formatDate } from '../../utils/formatDate';
 export default function ClientDashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { subscribeToBookingUpdates, subscribeToNewBookings } = useSocket() || {};
   const [bookings, setBookings] = useState([]);
   const [stats, setStats] = useState({ total: 0, pending: 0, confirmed: 0, cancelled: 0 });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchClientData = () => {
     api.get('/bookings/my?limit=5')
       .then(res => {
         const b = res.data.bookings || [];
@@ -28,7 +30,28 @@ export default function ClientDashboard() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchClientData();
   }, []);
+
+  useEffect(() => {
+    if (!subscribeToBookingUpdates) return;
+
+    const unsubscribeUpdate = subscribeToBookingUpdates(() => {
+      fetchClientData();
+    });
+
+    const unsubscribeNew = subscribeToNewBookings ? subscribeToNewBookings(() => {
+      fetchClientData();
+    }) : () => {};
+
+    return () => {
+      unsubscribeUpdate();
+      unsubscribeNew();
+    };
+  }, [subscribeToBookingUpdates, subscribeToNewBookings]);
 
   const statusBadge = (status) => {
     const labels = {

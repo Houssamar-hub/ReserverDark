@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Calendar, Users, Clock, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import Spinner from '../../components/common/Spinner';
+import { useSocket } from '../../context/SocketContext';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { formatDate } from '../../utils/formatDate';
@@ -9,11 +10,34 @@ import { formatPrice } from '../../utils/formatPrice';
 
 export default function MyBookings() {
   const { t } = useTranslation();
+  const { subscribeToBookingUpdates, subscribeToNewBookings } = useSocket() || {};
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
 
   useEffect(() => { fetchBookings(); }, []);
+
+  useEffect(() => {
+    if (!subscribeToBookingUpdates) return;
+
+    const unsubscribeUpdate = subscribeToBookingUpdates((updatedBooking) => {
+      setBookings((prev) =>
+        prev.map((b) => (b._id === updatedBooking._id ? updatedBooking : b))
+      );
+    });
+
+    const unsubscribeNew = subscribeToNewBookings ? subscribeToNewBookings((newBooking) => {
+      setBookings((prev) => {
+        if (prev.some((b) => b._id === newBooking._id)) return prev;
+        return [newBooking, ...prev];
+      });
+    }) : () => {};
+
+    return () => {
+      unsubscribeUpdate();
+      unsubscribeNew();
+    };
+  }, [subscribeToBookingUpdates, subscribeToNewBookings]);
 
   const fetchBookings = async () => {
     try {

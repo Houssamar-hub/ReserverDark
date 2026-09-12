@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import AppRoutes from './routes/AppRoutes';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { SocketProvider } from './context/SocketContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 
 function ToasterWithTheme() {
@@ -33,8 +34,10 @@ function App() {
       <BrowserRouter>
         <AuthProvider>
           <NotificationProvider>
-            <AppRoutes />
-            <ToasterWithTheme />
+            <SocketProvider>
+              <AppRoutes />
+              <ToasterWithTheme />
+            </SocketProvider>
           </NotificationProvider>
         </AuthProvider>
       </BrowserRouter>

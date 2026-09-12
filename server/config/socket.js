@@ -1,22 +1,47 @@
 import { Server } from 'socket.io';
 
-let io;
+let io = null;
 
 export const initializeSocket = (server) => {
   try {
     io = new Server(server, {
       cors: {
         origin: process.env.NODE_ENV === 'production' 
-          ? 'https://yourdomain.com' 
-          : 'http://localhost:5173',
+          ? (process.env.CLIENT_URL || 'https://yourdomain.com')
+          : ['http://localhost:5173', 'http://localhost:3000'],
         credentials: true,
-        methods: ['GET', 'POST'],
+        methods: ['GET', 'POST', 'PATCH', 'DELETE'],
       },
       transports: ['websocket', 'polling'],
     });
 
     io.on('connection', (socket) => {
       console.log('🔌 Client connected:', socket.id);
+
+      // Join personal user room
+      socket.on('join_user', (userId) => {
+        if (userId) {
+          const room = `user:${userId}`;
+          socket.join(room);
+          console.log(`👤 Socket ${socket.id} joined room ${room}`);
+        }
+      });
+
+      // Join role room (admin, owner, client)
+      socket.on('join_role', (role) => {
+        if (role) {
+          const room = `role:${role}`;
+          socket.join(room);
+          console.log(`🛡️ Socket ${socket.id} joined role ${room}`);
+        }
+      });
+
+      // Leave user room
+      socket.on('leave_user', (userId) => {
+        if (userId) {
+          socket.leave(`user:${userId}`);
+        }
+      });
 
       socket.on('disconnect', () => {
         console.log('🔌 Client disconnected:', socket.id);
@@ -37,9 +62,25 @@ export const initializeSocket = (server) => {
 
 export const getIO = () => {
   if (!io) {
-    throw new Error('Socket.io not initialized');
+    console.warn('Socket.io not yet initialized');
+    return null;
   }
   return io;
 };
 
-export default { initializeSocket, getIO };
+export const emitToUser = (userId, event, data) => {
+  if (!io || !userId) return;
+  io.to(`user:${userId.toString()}`).emit(event, data);
+};
+
+export const emitToRole = (role, event, data) => {
+  if (!io || !role) return;
+  io.to(`role:${role}`).emit(event, data);
+};
+
+export const broadcastEvent = (event, data) => {
+  if (!io) return;
+  io.emit(event, data);
+};
+
+export default { initializeSocket, getIO, emitToUser, emitToRole, broadcastEvent };

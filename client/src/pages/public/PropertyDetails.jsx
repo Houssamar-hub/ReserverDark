@@ -44,6 +44,23 @@ const PropertyDetails = () => {
     if (user) {
       checkFavorite();
     }
+    // Restore pending booking data if returning from login/register
+    try {
+      const saved = sessionStorage.getItem('pending_booking');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.propertyId === id) {
+          setBookingData({
+            checkIn: parsed.checkIn || '',
+            checkOut: parsed.checkOut || '',
+            guests: parsed.guests || 1,
+          });
+          sessionStorage.removeItem('pending_booking');
+        }
+      }
+    } catch (e) {
+      console.error('Error reading pending booking:', e);
+    }
   }, [id, user]);
 
   const fetchProperty = async () => {
@@ -71,7 +88,8 @@ const PropertyDetails = () => {
   const toggleFavorite = async () => {
     if (!user) {
       toast.error(t('auth.noAccount') === 'Pas encore de compte ?' ? 'Connectez-vous pour ajouter aux favoris' : 'Login to add to favorites');
-      navigate('/login');
+      const returnUrl = `/properties/${id}`;
+      navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`, { state: { from: returnUrl } });
       return;
     }
 
@@ -142,8 +160,16 @@ const PropertyDetails = () => {
   const handleBooking = async (e) => {
     e.preventDefault();
     if (!user) {
-      toast.error(t('auth.noAccount') === 'Pas encore de compte ?' ? 'Connectez-vous pour réserver' : 'Login to book');
-      navigate('/login');
+      toast.error('Veuillez vous connecter ou vous inscrire pour réserver ce logement');
+      const returnUrl = `/properties/${id}`;
+      // Persist chosen booking dates and guests so the user doesn't lose them
+      sessionStorage.setItem('pending_booking', JSON.stringify({
+        propertyId: id,
+        checkIn: bookingData.checkIn,
+        checkOut: bookingData.checkOut,
+        guests: bookingData.guests,
+      }));
+      navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`, { state: { from: returnUrl } });
       return;
     }
     if (user.role === 'owner') {
@@ -174,6 +200,7 @@ const PropertyDetails = () => {
         checkOut: bookingData.checkOut,
         guests: bookingData.guests,
       });
+      sessionStorage.removeItem('pending_booking');
       toast.success(t('common.success'));
       navigate('/client/bookings');
     } catch (error) {
@@ -186,7 +213,8 @@ const PropertyDetails = () => {
   const handleOpenContact = () => {
     if (!user) {
       toast.error('Connectez-vous pour envoyer un message');
-      navigate('/login');
+      const returnUrl = `/properties/${id}`;
+      navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`, { state: { from: returnUrl } });
       return;
     }
     const ownerId = property?.owner?._id || property?.owner;
@@ -241,7 +269,8 @@ const PropertyDetails = () => {
   const handleReviewSubmit = async ({ rating, comment }) => {
     if (!user) {
       toast.error('Connectez-vous pour laisser un avis');
-      navigate('/login');
+      const returnUrl = `/properties/${id}`;
+      navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`, { state: { from: returnUrl } });
       return;
     }
 

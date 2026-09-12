@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Spinner from '../../components/common/Spinner';
+import { useSocket } from '../../context/SocketContext';
 import api from '../../services/api';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
@@ -16,6 +17,7 @@ const MONTH_NAMES = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août'
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
+  const { subscribeToNewBookings, subscribeToBookingUpdates } = useSocket() || {};
   const [stats, setStats] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +26,32 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchAdminData();
   }, []);
+
+  useEffect(() => {
+    if (!subscribeToNewBookings || !subscribeToBookingUpdates) return;
+
+    const unsubscribeNew = subscribeToNewBookings((newBooking) => {
+      setBookings((prev) => {
+        if (prev.some((b) => b._id === newBooking._id)) return prev;
+        return [newBooking, ...prev];
+      });
+      // Refresh admin stats in background
+      api.get('/admin/stats').then((r) => setStats(r.data.stats || {})).catch(() => {});
+    });
+
+    const unsubscribeUpdate = subscribeToBookingUpdates((updatedBooking) => {
+      setBookings((prev) =>
+        prev.map((b) => (b._id === updatedBooking._id ? updatedBooking : b))
+      );
+      // Refresh admin stats in background
+      api.get('/admin/stats').then((r) => setStats(r.data.stats || {})).catch(() => {});
+    });
+
+    return () => {
+      unsubscribeNew();
+      unsubscribeUpdate();
+    };
+  }, [subscribeToNewBookings, subscribeToBookingUpdates]);
 
   const fetchAdminData = async () => {
     try {

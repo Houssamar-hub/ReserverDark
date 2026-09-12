@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -8,6 +8,10 @@ export default function Login() {
   const { t } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const redirectUrl = searchParams.get('redirect') || location.state?.from;
+
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -31,9 +35,17 @@ export default function Login() {
     try {
       const data = await login(form);
       const role = data.user?.role;
-      if (role === 'admin') navigate('/admin');
-      else if (role === 'owner') navigate('/owner');
-      else navigate('/client');
+      if (redirectUrl && role === 'client') {
+        navigate(redirectUrl, { replace: true });
+      } else if (role === 'admin') {
+        navigate('/admin');
+      } else if (role === 'owner') {
+        navigate('/owner');
+      } else if (redirectUrl) {
+        navigate(redirectUrl, { replace: true });
+      } else {
+        navigate('/client');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Email ou mot de passe incorrect');
     } finally {
@@ -146,7 +158,10 @@ export default function Login() {
 
           <p className="text-center text-sm mt-6" style={{ color: 'var(--text-muted)' }}>
             {t('auth.noAccount')}{' '}
-            <Link to="/register" className="text-primary-500 hover:text-primary-600 font-semibold">
+            <Link 
+              to={`/register${redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`} 
+              className="text-primary-500 hover:text-primary-600 font-semibold"
+            >
               {t('auth.register')}
             </Link>
           </p>

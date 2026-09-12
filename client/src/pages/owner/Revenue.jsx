@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import Spinner from '../../components/common/Spinner';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
 import api from '../../services/api';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
@@ -17,6 +18,7 @@ const MONTH_NAMES = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août'
 export default function Revenue() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { subscribeToNewBookings, subscribeToBookingUpdates } = useSocket() || {};
   const [stats, setStats] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [properties, setProperties] = useState([]);
@@ -26,6 +28,33 @@ export default function Revenue() {
   useEffect(() => {
     fetchRevenueData();
   }, []);
+
+  // Real-time socket listener for revenue & transactions
+  useEffect(() => {
+    if (!subscribeToNewBookings || !subscribeToBookingUpdates) return;
+
+    const unsubscribeNew = subscribeToNewBookings((newBooking) => {
+      setBookings((prev) => {
+        if (prev.some((b) => b._id === newBooking._id)) return prev;
+        return [newBooking, ...prev];
+      });
+      // Refresh stats
+      api.get('/bookings/stats').then((r) => setStats(r.data.stats || {})).catch(() => {});
+    });
+
+    const unsubscribeUpdate = subscribeToBookingUpdates((updatedBooking) => {
+      setBookings((prev) =>
+        prev.map((b) => (b._id === updatedBooking._id ? updatedBooking : b))
+      );
+      // Refresh stats
+      api.get('/bookings/stats').then((r) => setStats(r.data.stats || {})).catch(() => {});
+    });
+
+    return () => {
+      unsubscribeNew();
+      unsubscribeUpdate();
+    };
+  }, [subscribeToNewBookings, subscribeToBookingUpdates]);
 
   const fetchRevenueData = async () => {
     try {

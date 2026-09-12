@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { User, Mail, Lock, Phone, Eye, EyeOff, Home, Users, AlertCircle, CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -8,7 +8,11 @@ export default function Register() {
   const { t } = useTranslation();
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '', phone: '', role: 'client' });
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const redirectUrl = searchParams.get('redirect') || location.state?.from;
+  const initialRole = searchParams.get('role') === 'owner' ? 'owner' : 'client';
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '', phone: '', role: initialRole });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -42,8 +46,15 @@ export default function Register() {
     setLoading(true);
     try {
       const data = await register({ name: form.name, email: form.email, password: form.password, phone: form.phone, role: form.role });
-      if (data.user?.role === 'owner') navigate('/owner');
-      else navigate('/client');
+      if (redirectUrl && data.user?.role === 'client') {
+        navigate(redirectUrl, { replace: true });
+      } else if (data.user?.role === 'owner') {
+        navigate('/owner');
+      } else if (redirectUrl) {
+        navigate(redirectUrl, { replace: true });
+      } else {
+        navigate('/client');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur lors de l\'inscription');
     } finally {
@@ -212,7 +223,10 @@ export default function Register() {
 
           <p className="text-center text-sm mt-6" style={{ color: 'var(--text-muted)' }}>
             {t('auth.hasAccount')}{' '}
-            <Link to="/login" className="text-primary-500 hover:text-primary-600 font-semibold">
+            <Link 
+              to={`/login${redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`} 
+              className="text-primary-500 hover:text-primary-600 font-semibold"
+            >
               {t('auth.login')}
             </Link>
           </p>

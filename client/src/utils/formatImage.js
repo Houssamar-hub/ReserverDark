@@ -7,7 +7,7 @@ export function formatImageUrl(url, fallback = DEFAULT_FALLBACK_IMAGE) {
 
   let cleanUrl = url.trim();
 
-  // Fix malformed Unsplash domains (e.g. imagesunsplashcom)
+  // Fix malformed Unsplash domains
   if (cleanUrl.includes('imagesunsplashcom')) {
     cleanUrl = cleanUrl.replace('imagesunsplashcom', 'images.unsplash.com');
   }
@@ -17,22 +17,22 @@ export function formatImageUrl(url, fallback = DEFAULT_FALLBACK_IMAGE) {
     return cleanUrl;
   }
 
-  // If starts with /
+  // If starts with / (local public assets or /uploads)
   if (cleanUrl.startsWith('/')) {
     return cleanUrl;
   }
 
-  // If Unsplash ID like "photo-1560448204-e02f11c3d0e2..."
-  if (cleanUrl.startsWith('photo-')) {
-    return `https://images.unsplash.com/${cleanUrl}`;
-  }
-
-  // If relative to uploads
+  // If relative path without leading slash
   if (cleanUrl.startsWith('uploads/')) {
     return `/${cleanUrl}`;
   }
 
-  return cleanUrl;
+  // If Unsplash ID
+  if (cleanUrl.startsWith('photo-')) {
+    return `https://images.unsplash.com/${cleanUrl}`;
+  }
+
+  return `/${cleanUrl}`;
 }
 
 export function handleImageError(e, fallback = DEFAULT_FALLBACK_IMAGE) {
@@ -40,3 +40,4 @@ export function handleImageError(e, fallback = DEFAULT_FALLBACK_IMAGE) {
     e.target.src = fallback;
   }
 }
+

@@ -5,6 +5,7 @@ import {
   Search, MapPin, CheckCircle2, AlertCircle
 } from 'lucide-react';
 import Spinner from '../../components/common/Spinner';
+import { useSocket } from '../../context/SocketContext';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { formatPrice } from '../../utils/formatPrice';
@@ -13,6 +14,7 @@ import { formatImageUrl, handleImageError } from '../../utils/formatImage';
 
 export default function OwnerBookings() {
   const { t } = useTranslation();
+  const { subscribeToNewBookings, subscribeToBookingUpdates } = useSocket() || {};
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
@@ -22,6 +24,29 @@ export default function OwnerBookings() {
   useEffect(() => {
     fetchBookings();
   }, []);
+
+  // Real-time socket events
+  useEffect(() => {
+    if (!subscribeToNewBookings || !subscribeToBookingUpdates) return;
+
+    const unsubscribeNew = subscribeToNewBookings((newBooking) => {
+      setBookings((prev) => {
+        if (prev.some((b) => b._id === newBooking._id)) return prev;
+        return [newBooking, ...prev];
+      });
+    });
+
+    const unsubscribeUpdate = subscribeToBookingUpdates((updatedBooking) => {
+      setBookings((prev) =>
+        prev.map((b) => (b._id === updatedBooking._id ? updatedBooking : b))
+      );
+    });
+
+    return () => {
+      unsubscribeNew();
+      unsubscribeUpdate();
+    };
+  }, [subscribeToNewBookings, subscribeToBookingUpdates]);
 
   const fetchBookings = async () => {
     try {

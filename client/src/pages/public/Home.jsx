@@ -4,35 +4,52 @@ import { Search, MapPin, ArrowRight, Building2, Briefcase, Home, Trees, Landmark
 import { useTranslation } from "react-i18next";
 import PropertyCard from "../../components/property/PropertyCard";
 import Spinner from "../../components/common/Spinner";
+import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
 
 const propTypes = [
-  { label: "Appartement", icon: Building2, count: "1 245" },
-  { label: "Bureau",      icon: Briefcase, count: "1 020" },
-  { label: "Maison",      icon: Home,      count: "3 460" },
-  { label: "Villa",       icon: Trees,     count: "2 814" },
-  { label: "Riad",        icon: Landmark,  count: "1 052" },
+  { label: "Appartement", icon: Building2, defaultCount: 12 },
+  { label: "Villa",       icon: Trees,     defaultCount: 18 },
+  { label: "Maison",      icon: Home,      defaultCount: 15 },
+  { label: "Studio",      icon: Briefcase, defaultCount: 8 },
+  { label: "Riad",        icon: Landmark,  defaultCount: 6 },
 ];
 
 const cities = ["Casablanca", "Marrakech", "Rabat", "Agadir", "Fes", "Tanger"];
 
 export default function HomePage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [properties, setProperties] = useState([]);
+  const [typeCounts, setTypeCounts] = useState({});
   const [loading, setLoading]       = useState(true);
   const [tab, setTab]               = useState("rent");
-  const [search, setSearch]         = useState("");
-  const [selectedType, setSelectedType] = useState(0);
+  const [selectedCity, setSelectedCity] = useState("");
+  const [selectedPropType, setSelectedPropType] = useState("");
 
   useEffect(() => {
-    api.get("/properties?limit=6")
-      .then(res => setProperties(res.data.properties || []))
+    api.get("/properties?limit=100")
+      .then(res => {
+        const all = res.data.properties || [];
+        setProperties(all.slice(0, 6));
+        const counts = {};
+        all.forEach(p => {
+          if (p.type) counts[p.type] = (counts[p.type] || 0) + 1;
+        });
+        setTypeCounts(counts);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  const searchUrl = "/properties" + (search ? "?city=" + search : "");
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (selectedCity) params.append("city", selectedCity);
+    if (selectedPropType) params.append("type", selectedPropType);
+    if (tab) params.append("mode", tab);
+    navigate(`/properties?${params.toString()}`);
+  };
 
   return (
     <div style={{ backgroundColor: "var(--bg-primary)" }}>
@@ -56,79 +73,103 @@ export default function HomePage() {
               </h1>
 
               <p className="text-base leading-relaxed mb-8 max-w-md" style={{ color: "var(--text-muted)" }}>
-                La plateforme de reference pour la location courte duree. Appartements, villas, riads — louez en toute confiance partout au Maroc.
+                La plateforme de référence pour la location courte durée. Appartements, villas, riads — louez en toute confiance partout au Maroc.
               </p>
 
               <p className="text-base font-semibold mb-5" style={{ color: "var(--text-primary)" }}>
                 Trouvez votre{" "}
-                <span style={{ color: "var(--accent)" }}>logement ideal.</span>
+                <span style={{ color: "var(--accent)" }}>logement idéal.</span>
               </p>
 
-              {/* Tabs */}
-              <div className="flex items-center gap-1 mb-6 p-1 rounded-xl w-fit"
+              {/* Tabs: Louer / Acheter */}
+              <div className="flex items-center gap-1 mb-5 p-1 rounded-2xl w-fit"
                 style={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
                 {[["rent","Louer"],["buy","Acheter"]].map(([key, label]) => (
                   <button key={key} onClick={() => setTab(key)}
-                    className="px-6 py-2.5 rounded-lg text-sm font-semibold transition-all"
+                    type="button"
+                    className="px-6 py-2.5 rounded-xl text-sm font-bold transition-all"
                     style={tab === key
-                      ? { backgroundColor: "var(--accent)", color: "#fff", boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }
+                      ? { backgroundColor: "var(--accent)", color: "#fff", boxShadow: "0 4px 12px rgba(37,99,235,0.35)" }
                       : { color: "var(--text-muted)", backgroundColor: "transparent" }}>
                     {label}
                   </button>
                 ))}
               </div>
 
-              {/* Search box */}
-              <div className="rounded-2xl p-3"
-                style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", boxShadow: "var(--shadow-lg)" }}>
-                <div className="flex flex-col sm:flex-row gap-3">
+              {/* Search box card */}
+              <div className="rounded-3xl p-4 sm:p-5 transition-all"
+                style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", boxShadow: "0 10px 30px rgba(0,0,0,0.08)" }}>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3.5">
+                  {/* Ville select */}
                   <div className="flex-1">
-                    <label className="text-xs font-semibold block mb-1.5 px-1" style={{ color: "var(--text-muted)" }}>Ville</label>
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                    <label className="text-xs font-bold block mb-1.5 px-1" style={{ color: "var(--text-muted)" }}>Ville</label>
+                    <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl transition-all"
                       style={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
                       <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: "var(--accent)" }} />
-                      <select value={search} onChange={e => setSearch(e.target.value)}
-                        className="w-full bg-transparent text-sm focus:outline-none"
-                        style={{ color: search ? "var(--text-primary)" : "var(--text-muted)" }}>
+                      <select
+                        value={selectedCity}
+                        onChange={e => setSelectedCity(e.target.value)}
+                        className="w-full bg-transparent text-xs sm:text-sm font-semibold focus:outline-none cursor-pointer"
+                        style={{ color: selectedCity ? "var(--text-primary)" : "var(--text-muted)" }}
+                      >
                         <option value="">Toutes les villes</option>
-                        {cities.map(c => <option key={c} value={c}>{c}</option>)}
+                        {cities.map(c => <option key={c} value={c} className="bg-slate-900 text-white">{c}</option>)}
                       </select>
                     </div>
                   </div>
+
+                  {/* Type select */}
                   <div className="flex-1">
-                    <label className="text-xs font-semibold block mb-1.5 px-1" style={{ color: "var(--text-muted)" }}>Type</label>
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                    <label className="text-xs font-bold block mb-1.5 px-1" style={{ color: "var(--text-muted)" }}>Type</label>
+                    <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl transition-all"
                       style={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
                       <Building2 className="w-4 h-4 flex-shrink-0" style={{ color: "var(--accent)" }} />
-                      <select className="w-full bg-transparent text-sm focus:outline-none" style={{ color: "var(--text-muted)" }}>
-                        <option>Appartement</option>
-                        <option>Villa</option>
-                        <option>Maison</option>
-                        <option>Bureau</option>
-                        <option>Riad</option>
+                      <select
+                        value={selectedPropType}
+                        onChange={e => setSelectedPropType(e.target.value)}
+                        className="w-full bg-transparent text-xs sm:text-sm font-semibold focus:outline-none cursor-pointer"
+                        style={{ color: selectedPropType ? "var(--text-primary)" : "var(--text-muted)" }}
+                      >
+                        <option value="">Tous les types</option>
+                        <option value="Appartement" className="bg-slate-900 text-white">Appartement</option>
+                        <option value="Villa" className="bg-slate-900 text-white">Villa</option>
+                        <option value="Maison" className="bg-slate-900 text-white">Maison</option>
+                        <option value="Studio" className="bg-slate-900 text-white">Studio</option>
+                        <option value="Riad" className="bg-slate-900 text-white">Riad</option>
                       </select>
                     </div>
                   </div>
-                  <div className="flex items-end">
-                    <button onClick={() => navigate(searchUrl)}
-                      className="flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm transition-all hover:opacity-90 whitespace-nowrap w-full sm:w-auto justify-center"
-                      style={{ backgroundColor: "var(--accent)" }}>
-                      <Search className="w-4 h-4" /> Rechercher
-                    </button>
-                  </div>
+
+                  {/* Submit button */}
+                  <button
+                    type="button"
+                    onClick={handleSearch}
+                    className="flex items-center gap-2 px-7 py-3 rounded-2xl text-white font-bold text-sm transition-all hover:opacity-95 active:scale-98 whitespace-nowrap justify-center shadow-md cursor-pointer"
+                    style={{ backgroundColor: "var(--accent)" }}
+                  >
+                    <Search className="w-4 h-4" /> Rechercher
+                  </button>
                 </div>
               </div>
 
-              {/* City pills */}
+              {/* City quick pills */}
               <div className="flex flex-wrap gap-2 mt-4">
                 {cities.map(city => (
-                  <Link key={city} to={"/properties?city=" + city}
-                    className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                    style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
+                  <button
+                    key={city}
+                    type="button"
+                    onClick={() => navigate(`/properties?city=${encodeURIComponent(city)}`)}
+                    className="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-2xs"
+                    style={{
+                      border: "1px solid var(--border)",
+                      color: "var(--text-muted)",
+                      backgroundColor: "var(--bg-secondary)"
+                    }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}>
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}
+                  >
                     {city}
-                  </Link>
+                  </button>
                 ))}
               </div>
             </div>
@@ -175,27 +216,46 @@ export default function HomePage() {
           <h2 className="font-display text-3xl md:text-4xl mb-10" style={{ color: "var(--text-primary)" }}>
             Explorer par type
           </h2>
-          <div className="flex gap-4 overflow-x-auto pb-2">
-            {propTypes.map(({ label, icon: Icon, count }, i) => (
-              <button key={label} onClick={() => setSelectedType(i)}
-                className="flex-shrink-0 flex flex-col items-center gap-3 px-8 py-6 rounded-2xl transition-all duration-200"
-                style={selectedType === i
-                  ? { backgroundColor: "var(--accent)", color: "#fff", boxShadow: "0 4px 16px rgba(37,99,235,0.35)" }
-                  : { backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
-                <div className="w-12 h-12 flex items-center justify-center rounded-xl"
-                  style={{ backgroundColor: selectedType === i ? "rgba(255,255,255,0.2)" : "var(--bg-card)" }}>
-                  <Icon className="w-6 h-6" style={{ color: selectedType === i ? "#fff" : "var(--accent)" }} />
-                </div>
-                <div>
-                  <div className="font-semibold text-sm" style={{ color: selectedType === i ? "#fff" : "var(--text-primary)" }}>
-                    {label}
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {propTypes.map(({ label, icon: Icon, defaultCount }) => {
+              const count = typeCounts[label] ?? defaultCount;
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => navigate(`/properties?type=${encodeURIComponent(label)}`)}
+                  className="flex-shrink-0 flex flex-col items-center gap-3 px-8 py-6 rounded-2xl transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer group shadow-2xs"
+                  style={{
+                    backgroundColor: "var(--bg-secondary)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text-muted)",
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = "var(--accent)";
+                    e.currentTarget.style.boxShadow = "0 8px 24px rgba(37,99,235,0.18)";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = "var(--border)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  <div
+                    className="w-12 h-12 flex items-center justify-center rounded-xl transition-all group-hover:scale-110"
+                    style={{ backgroundColor: "var(--bg-card)" }}
+                  >
+                    <Icon className="w-6 h-6 transition-colors group-hover:text-blue-600" style={{ color: "var(--accent)" }} />
                   </div>
-                  <div className="text-xs mt-0.5" style={{ color: selectedType === i ? "rgba(255,255,255,0.75)" : "var(--text-muted)" }}>
-                    {count} proprietes
+                  <div className="text-center">
+                    <div className="font-bold text-sm transition-colors group-hover:text-blue-600" style={{ color: "var(--text-primary)" }}>
+                      {label}
+                    </div>
+                    <div className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                      {count} {count > 1 ? 'propriétés' : 'propriété'}
+                    </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -283,20 +343,28 @@ export default function HomePage() {
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 px-10 py-12">
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "rgba(191,219,254,0.9)" }}>
-                Pour les proprietaires
+                Pour les propriétaires
               </p>
               <h2 className="font-display text-3xl md:text-4xl text-white mb-3">
                 Publiez votre logement
               </h2>
               <p className="text-sm leading-relaxed max-w-md" style={{ color: "rgba(191,219,254,0.85)" }}>
-                Rejoignez plus de 400 proprietaires qui font confiance a ReserverDark pour louer leur bien au Maroc.
+                Rejoignez plus de 400 propriétaires qui font confiance à ReserverDark pour louer leur bien au Maroc.
               </p>
             </div>
-            <Link to="/register"
-              className="flex-shrink-0 flex items-center gap-3 px-8 py-4 rounded-2xl text-sm font-bold transition-all hover:scale-105"
-              style={{ backgroundColor: "#fff", color: "var(--accent)" }}>
+            <Link
+              to={
+                user?.role === 'owner'
+                  ? '/owner/properties/add'
+                  : user?.role === 'admin'
+                  ? '/admin/properties'
+                  : '/register?role=owner'
+              }
+              className="flex-shrink-0 flex items-center gap-3 px-8 py-4 rounded-2xl text-sm font-bold transition-all hover:scale-105 active:scale-98 shadow-lg cursor-pointer"
+              style={{ backgroundColor: "#fff", color: "var(--accent)" }}
+            >
               <Users className="w-5 h-5" />
-              Devenir proprietaire
+              {user?.role === 'owner' ? 'Publier un logement' : 'Devenir propriétaire'}
             </Link>
           </div>
         </div>
