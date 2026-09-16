@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # Database Service (MongoDB)
+  # ==========================================
+  mongo:
+    image: mongo:7.0
+    container_name: reserverdark-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - reserverdark-net
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ==========================================
+  # Backend API Service (Node.js / Express)
+  # ==========================================
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: reserverdark-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongo:27017/reserverdark
+      - JWT_SECRET=reserverdark_jwt_secret_key_production_2026
+      - JWT_EXPIRE=30d
+      - CLIENT_URL=http://localhost,http://localhost:80,http://localhost:5173
+    volumes:
+      - server_uploads:/app/uploads
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - reserverdark-net
+
+  # ==========================================
+  # Frontend Web Service (React + Nginx)
+  # ==========================================
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: reserverdark-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - reserverdark-net
+
+# ==========================================
+# Persistent Volumes
+# ==========================================
+volumes:
+  mongo_data:
+    driver: local
+  server_uploads:
+    driver: local
+
+# ==========================================
+# Network Configuration
+# ==========================================
+networks:
+  reserverdark-net:
+    driver: bridge

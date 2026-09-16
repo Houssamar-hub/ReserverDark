@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, MapPin, ArrowRight, Building2, Briefcase, Home, Trees, Landmark, Shield, Star, Users, CheckCircle, Plus } from "lucide-react";
+import { Search, MapPin, ArrowRight, Building2, Briefcase, Home, Trees, Landmark, Shield, Star, Users, CheckCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import PropertyCard from "../../components/property/PropertyCard";
 import Spinner from "../../components/common/Spinner";
@@ -275,14 +275,10 @@ export default function HomePage() {
             </div>
             <div className="flex items-center gap-2 mt-auto">
               <Link to="/properties"
-                className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-all"
+                className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-white hover:opacity-90 transition-all"
                 style={{ backgroundColor: "var(--accent)" }}>
                 Voir tout <ArrowRight className="w-4 h-4" />
               </Link>
-              <button className="w-10 h-10 flex items-center justify-center rounded-xl transition-all"
-                style={{ border: "1px solid var(--border)", color: "var(--text-muted)", backgroundColor: "var(--bg-card)" }}>
-                <Plus className="w-4 h-4" />
-              </button>
             </div>
           </div>
 

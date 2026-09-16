@@ -46,10 +46,11 @@ app.use(
 // CORS
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? "https://yourdomain.com"
-        : "http://localhost:5173",
+    origin: process.env.CLIENT_URL
+      ? (process.env.CLIENT_URL.includes(',') ? process.env.CLIENT_URL.split(',').map(u => u.trim()) : process.env.CLIENT_URL)
+      : process.env.NODE_ENV === "production"
+      ? ["https://yourdomain.com", "http://localhost:5173", "http://localhost", "http://localhost:80"]
+      : "http://localhost:5173",
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],

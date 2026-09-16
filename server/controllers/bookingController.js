@@ -89,6 +89,8 @@ export const createBooking = async (req, res) => {
       title: 'Nouvelle demande de réservation',
       message: `${req.user.name} souhaite réserver ${property.title}`,
       type: 'booking_created',
+      link: '/owner/bookings',
+      data: { bookingId: booking._id, propertyId: property._id },
     });
 
     const notifObj = { ...notification.toObject(), read: false };
@@ -201,6 +203,8 @@ export const updateBookingStatus = async (req, res) => {
       title: notificationTitle,
       message: notificationMessage,
       type: notificationType,
+      link: '/client/bookings',
+      data: { bookingId: booking._id, propertyId: booking.property?._id },
     });
 
     const notifObj = { ...notification.toObject(), read: false };
@@ -253,6 +257,8 @@ export const cancelBooking = async (req, res) => {
         title: 'Réservation annulée',
         message: `La réservation pour ${booking.property?.title || 'le logement'} a été annulée par le voyageur`,
         type: 'booking_cancelled',
+        link: '/owner/bookings',
+        data: { bookingId: booking._id },
       });
 
       const notifObj = { ...notification.toObject(), read: false };

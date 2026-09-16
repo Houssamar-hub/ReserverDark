@@ -71,6 +71,10 @@ const Navbar = ({ onToggleSidebar, isSidebarOpen }) => {
     setNotifOpen(false);
     if (notif.link) {
       navigate(notif.link);
+    } else if (notif.type?.startsWith('booking')) {
+      if (user?.role === 'owner') navigate('/owner/bookings');
+      else if (user?.role === 'admin') navigate('/admin/bookings');
+      else navigate('/client/bookings');
     } else if (user?.role === "client") {
       navigate("/client/notifications");
     }
