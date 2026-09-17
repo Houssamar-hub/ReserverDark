@@ -40,7 +40,8 @@ services:
       - JWT_EXPIRE=30d
       - CLIENT_URL=http://localhost,http://localhost:80,http://localhost:5173
     volumes:
-      - server_uploads:/app/uploads
+      - ./server/uploads:/app/uploads
+      - ./server/data:/app/data
     depends_on:
       mongo:
         condition: service_healthy
@@ -68,8 +69,6 @@ services:
 # ==========================================
 volumes:
   mongo_data:
-    driver: local
-  server_uploads:
     driver: local
 
 # ==========================================
