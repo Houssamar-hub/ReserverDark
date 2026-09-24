@@ -1,4 +1,4 @@
-# 🏡 ReserverDark — Plateforme de Location Courte Durée au Maroc
+﻿# 🏡 ReserverDark — Plateforme de Location Courte Durée au Maroc
 
 <div align="center">
 
@@ -31,157 +31,214 @@
 
 ## 📊 Architecture & Diagrammes
 
-### 1. 🏗️ Architecture Globale du Système
+### 1. 👥 Diagramme de Cas d'Utilisation (Use Case)
 
 ```mermaid
-flowchart TB
-    subgraph Client_Layer["🖥️ Frontend (React 19 + Vite + Tailwind CSS)"]
-        UI["Interface Utilisateur (Design Figma UI/UX)"]
-        Auth_Context["Auth & Role Context (Client / Owner / Admin)"]
-        Theme_I18n["Theme (Dark/Light) & i18n (FR/EN/AR)"]
-        Socket_Client["Client Socket.IO (Chat & Notifications)"]
+flowchart LR
+    Client(["👤 Client"])
+    Owner(["🏠 Propriétaire"])
+    Admin(["🛡️ Admin"])
+
+    subgraph PUBLIC["🌐 Accès Public"]
+        UC1["Voir les propriétés"]
+        UC2["Rechercher et Filtrer"]
+        UC3["Voir détail propriété"]
+        UC4["S'inscrire / Se connecter"]
     end
 
-    subgraph API_Gateway["🛡️ Serveur Backend (Node.js + Express)"]
-        Middlewares["Middlewares (Auth JWT, Roles, Rate Limiter, Helmet, CORS)"]
-        Controllers["Contrôleurs RESTful (Properties, Bookings, Users, Revenue)"]
-        Socket_Server["Serveur Socket.IO (Messagerie Temps Réel)"]
+    subgraph CLIENT_UC["🧳 Espace Client"]
+        UC5["Réserver une propriété"]
+        UC6["Annuler une réservation"]
+        UC7["Ajouter aux favoris"]
+        UC8["Laisser un avis"]
+        UC9["Envoyer un message"]
+        UC10["Voir les notifications"]
     end
 
-    subgraph Data_Layer["💾 Stockage & Cloud Services"]
-        MongoDB[("Base de Données MongoDB")]
-        Cloudinary["Stockage Médias Cloudinary (Photos Logements)"]
+    subgraph OWNER_UC["🏠 Espace Propriétaire"]
+        UC11["Publier un bien"]
+        UC12["Modifier / Supprimer un bien"]
+        UC13["Confirmer / Refuser réservation"]
+        UC14["Consulter revenus et calendrier"]
+        UC15["Répondre aux messages"]
     end
 
-    UI --> Auth_Context
-    UI --> Theme_I18n
-    UI --> Socket_Client
-    
-    Auth_Context -->|Requêtes HTTP + JWT| Middlewares
-    Socket_Client <-->|WebSockets Temps Réel| Socket_Server
-    
-    Middlewares --> Controllers
-    Controllers -->|Mongoose ODM| MongoDB
-    Controllers -->|Upload Images| Cloudinary
+    subgraph ADMIN_UC["🛡️ Espace Admin"]
+        UC16["Approuver / Rejeter un bien"]
+        UC17["Gérer les utilisateurs"]
+        UC18["Consulter les statistiques"]
+        UC19["Gérer les avis et rapports"]
+    end
+
+    Client --> UC1 & UC2 & UC3 & UC4
+    Client --> UC5 & UC6 & UC7 & UC8 & UC9 & UC10
+    Owner --> UC1 & UC4 & UC11 & UC12 & UC13 & UC14 & UC15
+    Admin --> UC16 & UC17 & UC18 & UC19
 ```
 
 ---
 
-### 2. 🗄️ Modèle de Données (Diagramme Entité-Relation)
+### 2. 🗂️ Diagramme de Classes (Class Diagram)
 
 ```mermaid
-erDiagram
-    USER ||--o{ PROPERTY : "possède (Owner)"
-    USER ||--o{ BOOKING : "effectue (Client)"
-    USER ||--o{ REVIEW : "rédige"
-    USER ||--o{ FAVORITE : "enregistre"
-    USER ||--o{ NOTIFICATION : "reçoit"
-    USER ||--o{ MESSAGE : "envoie / reçoit"
-    
-    PROPERTY ||--o{ BOOKING : "fait l'objet de"
-    PROPERTY ||--o{ REVIEW : "est évalué par"
-    PROPERTY ||--o{ FAVORITE : "est mis en favori"
-
-    USER {
-        ObjectId _id PK
-        string name
-        string email
-        string password
-        string role "client | owner | admin"
-        string phone
-        string avatar
-        boolean isVerified
-        datetime createdAt
+classDiagram
+    class User {
+        +ObjectId _id
+        +String name
+        +String email
+        +String password
+        +String role
+        +String phone
+        +String avatar
+        +Boolean isBlocked
+        +Date createdAt
+        +comparePassword(pwd) Boolean
     }
 
-    PROPERTY {
-        ObjectId _id PK
-        ObjectId owner FK
-        string title
-        string description
-        string type "Appartement | Villa | Riad | Maison | Studio"
-        number pricePerNight
-        string city
-        string address
-        string location
-        array amenities
-        array images
-        number maxGuests
-        number bedrooms
-        number bathrooms
-        string status "pending | approved | rejected | unavailable"
-        number averageRating
-        datetime createdAt
+    class Property {
+        +ObjectId _id
+        +ObjectId owner
+        +String title
+        +String type
+        +Number pricePerNight
+        +String city
+        +Array images
+        +Number maxGuests
+        +Number bedrooms
+        +Number bathrooms
+        +String status
+        +Number averageRating
     }
 
-    BOOKING {
-        ObjectId _id PK
-        ObjectId client FK
-        ObjectId property FK
-        ObjectId owner FK
-        date checkIn
-        date checkOut
-        number guests
-        number nights
-        number pricePerNight
-        number totalPrice
-        string status "pending | confirmed | rejected | cancelled | completed"
-        datetime createdAt
+    class Booking {
+        +ObjectId _id
+        +ObjectId client
+        +ObjectId property
+        +ObjectId owner
+        +Date checkIn
+        +Date checkOut
+        +Number guests
+        +Number totalPrice
+        +String status
     }
 
-    REVIEW {
-        ObjectId _id PK
-        ObjectId client FK
-        ObjectId property FK
-        number rating "1 à 5"
-        string comment
-        datetime createdAt
+    class Review {
+        +ObjectId _id
+        +ObjectId client
+        +ObjectId property
+        +Number rating
+        +String comment
+        +Date createdAt
     }
 
-    NOTIFICATION {
-        ObjectId _id PK
-        ObjectId user FK
-        string title
-        string message
-        string type
-        boolean isRead
-        datetime createdAt
+    class Notification {
+        +ObjectId _id
+        +ObjectId user
+        +String title
+        +String message
+        +String type
+        +String link
+        +Boolean isRead
     }
+
+    class Favorite {
+        +ObjectId _id
+        +ObjectId user
+        +ObjectId property
+    }
+
+    class Conversation {
+        +ObjectId _id
+        +Array participants
+        +ObjectId property
+        +String lastMessage
+    }
+
+    class Message {
+        +ObjectId _id
+        +ObjectId conversation
+        +ObjectId sender
+        +String content
+        +Boolean isRead
+    }
+
+    User "1" --> "0..*" Property : possède
+    User "1" --> "0..*" Booking : effectue
+    User "1" --> "0..*" Review : rédige
+    User "1" --> "0..*" Favorite : enregistre
+    User "1" --> "0..*" Notification : reçoit
+    Property "1" --> "0..*" Booking : reçoit
+    Property "1" --> "0..*" Review : est évalué
+    Conversation "1" --> "0..*" Message : contient
 ```
 
 ---
 
-### 3. 🔄 Flux de Réservation & Validation (Diagramme de Séquence)
+### 3. 🔄 Diagramme de Séquence — Flux de Réservation
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Voyageur as 🧳 Voyageur (Client)
-    participant Frontend as 🖥️ Frontend ReserverDark
-    participant Backend as ⚙️ API Express
+    actor Client as 🧳 Client
+    participant Frontend as 🖥️ React Frontend
+    participant API as ⚙️ Express API
+    participant Socket as 🔌 Socket.IO
     participant DB as 🗄️ MongoDB
-    actor Proprietaire as 🏠 Propriétaire (Hôte)
+    actor Owner as 🏠 Propriétaire
 
-    Voyageur->>Frontend: Sélectionne les dates & clique sur "Réserver"
-    Frontend->>Backend: POST /api/bookings (checkIn, checkOut, guests)
-    Backend->>DB: Vérifie les conflits de dates & statut du bien
-    Backend->>DB: Crée la réservation (Statut: "pending")
-    Backend->>DB: Crée une notification pour l'hôte
-    Backend-->>Frontend: 201 Created (Réservation en attente)
-    Frontend-->>Voyageur: Affiche confirmation de demande
+    Client->>Frontend: Sélectionne dates et clique Réserver
+    Frontend->>API: POST /api/bookings
+    API->>DB: Vérifie conflits de dates
+    API->>DB: Crée réservation status pending
+    API->>DB: Crée notification pour le propriétaire
+    API-->>Frontend: 201 Created
+    Frontend-->>Client: Réservation en attente confirmée
 
-    Backend-->>Proprietaire: Notification temps réel (Nouvelle demande de réservation)
-    Proprietaire->>Frontend: Ouvre l'espace "Réservations" (/owner/bookings)
-    Proprietaire->>Frontend: Clique sur "Confirmer la réservation"
-    Frontend->>Backend: PATCH /api/bookings/:id/status { status: "confirmed" }
-    Backend->>DB: Met à jour le statut en "confirmed"
-    Backend->>DB: Notifie le voyageur (Booking Confirmed)
-    Backend-->>Frontend: 200 OK
-    Frontend-->>Proprietaire: Met à jour les gains et le calendrier
+    API->>Socket: emit booking:new vers room owner
+    Socket-->>Owner: Toast notification temps réel
+    Owner->>Frontend: Ouvre /owner/bookings
+    Owner->>Frontend: Clique Confirmer
+    Frontend->>API: PATCH /api/bookings/:id/status confirmed
+    API->>DB: Met à jour statut vers confirmed
+    API->>DB: Crée notification pour le client
+    API->>Socket: emit booking:updated vers room client
+    Socket-->>Client: Réservation confirmée toast cliquable
+    API-->>Frontend: 200 OK
+    Frontend-->>Owner: Dashboard et revenus mis à jour
 ```
 
 ---
 
+### 4. 🔁 Diagramme d'Activité — Cycle de vie d'une Propriété
+
+```mermaid
+flowchart TD
+    A(["🏠 Propriétaire crée un bien"]) --> B["Remplit le formulaire\ntitle, type, prix, photos"]
+    B --> C["Upload des images via Multer"]
+    C --> D["POST /api/properties"]
+    D --> E{"Validation\ndes données"}
+    E -->|Erreur| F["Retourne erreurs de validation"]
+    F --> B
+    E -->|OK| G[("Sauvegarde en DB\nstatus: pending")]
+    G --> H["Admin reçoit une notification"]
+    H --> I{"Admin examine le bien"}
+    I -->|Approuve| J[("status: approved")]
+    I -->|Rejette| K[("status: rejected")]
+    J --> L["Bien visible sur la plateforme"]
+    K --> M["Propriétaire notifié du rejet"]
+    L --> N{"Client intéressé ?"}
+    N -->|Oui| O["Client réserve"]
+    N -->|Non| P(["Fin"])
+    O --> Q[("Réservation créée\nstatus: pending")]
+    Q --> R{"Propriétaire répond ?"}
+    R -->|Confirme| S[("status: confirmed")]
+    R -->|Refuse| T[("status: cancelled")]
+    S --> U["Séjour effectué"]
+    U --> V["Client laisse un avis"]
+    V --> W(["Fin du cycle"])
+```
+
+---
 ## ✨ Fonctionnalités Principales
 
 ### 🎨 Design & Expérience Utilisateur
