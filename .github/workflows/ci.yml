@@ -1,0 +1,114 @@
+name: ReserverDark CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─────────────────────────────────────────
+  # JOB 1 : Backend (Node.js / Express)
+  # ─────────────────────────────────────────
+  backend:
+    name: 🔧 Backend CI
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: server/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Lint check
+        run: npm run lint --if-present
+
+      - name: 🧪 Run tests
+        run: npm test --if-present
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://localhost:27017/reserverdark_test
+          JWT_SECRET: test_secret_key_ci
+
+  # ─────────────────────────────────────────
+  # JOB 2 : Frontend (React / Vite)
+  # ─────────────────────────────────────────
+  frontend:
+    name: 🎨 Frontend CI
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: client/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Lint check
+        run: npm run lint --if-present
+
+      - name: 🏗️ Build production
+        run: npm run build
+        env:
+          VITE_API_URL: http://localhost:5000/api
+
+      - name: 📤 Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: client/dist
+          retention-days: 7
+
+  # ─────────────────────────────────────────
+  # JOB 3 : Docker Build Check
+  # ─────────────────────────────────────────
+  docker:
+    name: 🐳 Docker Build Check
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔨 Build Backend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          push: false
+          tags: reserverdark-backend:ci
+
+      - name: 🔨 Build Frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
+          file: ./client/Dockerfile
+          push: false
+          tags: reserverdark-frontend:ci
