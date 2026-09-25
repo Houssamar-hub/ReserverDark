@@ -1,10 +1,10 @@
 {
   "transform": {},
   "testEnvironment": "node",
-  "extensionsToTreatAsEsm": [],
   "testMatch": ["**/tests/**/*.test.js"],
   "testTimeout": 30000,
   "verbose": true,
   "forceExit": true,
-  "detectOpenHandles": true
+  "detectOpenHandles": true,
+  "setupFiles": ["./tests/setupEnv.js"]
 }

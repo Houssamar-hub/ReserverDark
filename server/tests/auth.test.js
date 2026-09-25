@@ -49,7 +49,7 @@ const validOwner = {
 
 describe('POST /api/auth/register', () => {
 
-  it('âœ… devrait inscrire un client avec des donnÃ©es valides', async () => {
+  it('devrait inscrire un client avec des donnes valides', async () => {
     const res = await request(app)
       .post('/api/auth/register')
       .send(validClient);
@@ -62,7 +62,7 @@ describe('POST /api/auth/register', () => {
     expect(res.body.user).not.toHaveProperty('password');
   });
 
-  it('âœ… devrait inscrire un propriÃ©taire avec le rÃ´le owner', async () => {
+  it('devrait inscrire un propriataire avec le role owner', async () => {
     const res = await request(app)
       .post('/api/auth/register')
       .send(validOwner);
@@ -72,7 +72,7 @@ describe('POST /api/auth/register', () => {
     expect(res.body.user.name).toBe(validOwner.name);
   });
 
-  it('âœ… devrait retourner un token JWT valide', async () => {
+  it('devrait retourner un token JWT valide', async () => {
     const res = await request(app)
       .post('/api/auth/register')
       .send(validClient);
