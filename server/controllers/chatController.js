@@ -2,6 +2,7 @@ import Conversation from '../models/Conversation.js';
 import Message from '../models/Message.js';
 import Booking from '../models/Booking.js';
 import Property from '../models/Property.js';
+import User from '../models/User.js';
 
 // @desc    Get user conversations
 // @route   GET /api/conversations
@@ -113,8 +114,7 @@ export const createConversation = async (req, res) => {
   try {
     const { participantId, propertyId } = req.body;
 
-    // Vérifier que le participant existe
-    const User = (await import('../models/User.js')).default;
+    // Verifier que le participant existe
     const participant = await User.findById(participantId);
     if (!participant) {
       return res.status(404).json({ message: 'User not found' });

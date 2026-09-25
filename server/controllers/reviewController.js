@@ -5,9 +5,6 @@ import Property from '../models/Property.js';
 // @desc    Create review
 // @route   POST /api/reviews
 // @access  Private (Client only)
-// @desc    Create review
-// @route   POST /api/reviews
-// @access  Private (Client only)
 export const createReview = async (req, res) => {
   try {
     const { propertyId, bookingId, rating, comment } = req.body;
@@ -28,13 +25,19 @@ export const createReview = async (req, res) => {
       return res.status(404).json({ message: 'Property not found' });
     }
 
+    // Validate rating
+    const parsedRating = Number(rating);
+    if (!parsedRating || parsedRating < 1 || parsedRating > 5) {
+      return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+    }
+
     // Create review
     const review = await Review.create({
       client: req.user._id,
       property: targetPropertyId,
       booking: bookingId || null,
-      rating: Number(rating) || 5,
-      comment: comment || '',
+      rating: parsedRating,
+      comment: comment?.trim() || '',
     });
 
     // Update property average rating

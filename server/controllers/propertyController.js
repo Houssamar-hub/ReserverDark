@@ -218,9 +218,20 @@ export const updateProperty = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to update this property' });
     }
 
+    // Whitelist allowed fields — prevent client from overwriting owner/status/rating
+    const allowedFields = [
+      'title', 'description', 'type', 'pricePerNight',
+      'location', 'address', 'city', 'latitude', 'longitude',
+      'amenities', 'maxGuests', 'bedrooms', 'bathrooms', 'images',
+    ];
+    const updateData = {};
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) updateData[field] = req.body[field];
+    });
+
     const updatedProperty = await Property.findByIdAndUpdate(
       req.params.id,
-      { ...req.body },
+      updateData,
       { new: true, runValidators: true }
     );
 
@@ -249,10 +260,16 @@ export const deleteProperty = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this property' });
     }
 
-    // Delete images from Cloudinary
+    // Delete images from Cloudinary (only cloudinary URLs, not local uploads)
     for (const imageUrl of property.images) {
-      const publicId = imageUrl.split('/').pop().split('.')[0];
-      await cloudinary.uploader.destroy(`properties/${publicId}`);
+      if (imageUrl && imageUrl.includes('cloudinary.com')) {
+        const publicId = imageUrl.split('/').slice(-2).join('/').split('.')[0];
+        try {
+          await cloudinary.uploader.destroy(publicId);
+        } catch (err) {
+          console.error('Cloudinary delete error (non-blocking):', err.message);
+        }
+      }
     }
 
     await property.deleteOne();
@@ -374,8 +391,14 @@ export const deleteImage = async (req, res) => {
     }
 
     const imageUrl = property.images[imageIndex];
-    const publicId = imageUrl.split('/').pop().split('.')[0];
-    await cloudinary.uploader.destroy(`properties/${publicId}`);
+    if (imageUrl && imageUrl.includes('cloudinary.com')) {
+      const publicId = imageUrl.split('/').slice(-2).join('/').split('.')[0];
+      try {
+        await cloudinary.uploader.destroy(publicId);
+      } catch (err) {
+        console.error('Cloudinary delete error (non-blocking):', err.message);
+      }
+    }
 
     property.images.splice(imageIndex, 1);
     await property.save();

@@ -107,11 +107,11 @@ export const toggleBlockUser = async (req, res) => {
 
     await Notification.create({
       user: user._id,
-      title: user.isBlocked ? 'Account Blocked' : 'Account Unblocked',
+      title: user.isBlocked ? 'Compte bloque' : 'Compte debloque',
       message: user.isBlocked
-        ? 'Your account has been blocked by admin'
-        : 'Your account has been unblocked',
-      type: 'booking_created',
+        ? 'Votre compte a ete bloque par un administrateur'
+        : 'Votre compte a ete debloque par un administrateur',
+      type: 'system',
     });
 
     res.status(200).json({
