@@ -1,8 +1,11 @@
-﻿import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import mongoose from 'mongoose';
 import createTestApp from './testApp.js';
 
+// =============================================================================
+// Configuration de la base de donnees de test
+// =============================================================================
 
 let app;
 
@@ -16,21 +19,22 @@ beforeAll(async () => {
 }, 15000);
 
 afterAll(async () => {
-  // Drop test DB after all tests
   await mongoose.connection.dropDatabase();
   await mongoose.disconnect();
 });
 
 beforeEach(async () => {
-  // Clean users collection before each test
   const collections = mongoose.connection.collections;
   if (collections.users) {
     await collections.users.deleteMany({});
   }
 });
 
+// =============================================================================
+// Donnees de test
+// =============================================================================
 
-const validClient = {
+const clientValide = {
   name: 'Ahmed Benali',
   email: 'ahmed@test.com',
   password: 'password123',
@@ -38,7 +42,7 @@ const validClient = {
   role: 'client',
 };
 
-const validOwner = {
+const proprietaireValide = {
   name: 'Fatima Zahra',
   email: 'fatima@test.com',
   password: 'securepass456',
@@ -46,230 +50,229 @@ const validOwner = {
   role: 'owner',
 };
 
+// =============================================================================
+// 1. POST /api/auth/register
+// =============================================================================
 
 describe('POST /api/auth/register', () => {
 
-  it('devrait inscrire un client avec des donnes valides', async () => {
+  it('devrait inscrire un client avec des donnees valides', async () => {
     const res = await request(app)
       .post('/api/auth/register')
-      .send(validClient);
+      .send(clientValide);
 
     expect(res.statusCode).toBe(201);
     expect(res.body).toHaveProperty('token');
     expect(res.body).toHaveProperty('user');
-    expect(res.body.user.email).toBe(validClient.email);
+    expect(res.body.user.email).toBe(clientValide.email);
     expect(res.body.user.role).toBe('client');
     expect(res.body.user).not.toHaveProperty('password');
   });
 
-  it('devrait inscrire un propriataire avec le role owner', async () => {
+  it('devrait inscrire un proprietaire avec le role owner', async () => {
     const res = await request(app)
       .post('/api/auth/register')
-      .send(validOwner);
+      .send(proprietaireValide);
 
     expect(res.statusCode).toBe(201);
     expect(res.body.user.role).toBe('owner');
-    expect(res.body.user.name).toBe(validOwner.name);
+    expect(res.body.user.name).toBe(proprietaireValide.name);
   });
 
   it('devrait retourner un token JWT valide', async () => {
     const res = await request(app)
       .post('/api/auth/register')
-      .send(validClient);
+      .send(clientValide);
 
     expect(res.statusCode).toBe(201);
     const token = res.body.token;
     expect(typeof token).toBe('string');
-    // JWT has 3 parts separated by dots
     expect(token.split('.')).toHaveLength(3);
   });
 
-  it('âœ… le rÃ´le par dÃ©faut doit Ãªtre client si non prÃ©cisÃ©', async () => {
-    const { role, ...withoutRole } = validClient;
+  it('le role par defaut doit etre client si non precise', async () => {
+    const { role, ...sanRole } = clientValide;
     const res = await request(app)
       .post('/api/auth/register')
-      .send(withoutRole);
+      .send(sanRole);
 
     expect(res.statusCode).toBe(201);
     expect(res.body.user.role).toBe('client');
   });
 
-  it('âŒ devrait refuser si email dÃ©jÃ  utilisÃ©', async () => {
-    // First registration
-    await request(app).post('/api/auth/register').send(validClient);
-    // Second with same email
+  it('doit refuser si email deja utilise', async () => {
+    await request(app).post('/api/auth/register').send(clientValide);
     const res = await request(app)
       .post('/api/auth/register')
-      .send(validClient);
+      .send(clientValide);
 
     expect(res.statusCode).toBe(400);
     expect(res.body.message).toMatch(/already exists/i);
   });
 
-  it('âŒ devrait refuser si le nom est manquant', async () => {
-    const { name, ...withoutName } = validClient;
+  it('doit refuser si le nom est manquant', async () => {
+    const { name, ...sanNom } = clientValide;
     const res = await request(app)
       .post('/api/auth/register')
-      .send(withoutName);
+      .send(sanNom);
 
     expect(res.statusCode).toBeGreaterThanOrEqual(400);
   });
 
-  it('âŒ devrait refuser si email est manquant', async () => {
-    const { email, ...withoutEmail } = validClient;
+  it('doit refuser si email est manquant', async () => {
+    const { email, ...sanEmail } = clientValide;
     const res = await request(app)
       .post('/api/auth/register')
-      .send(withoutEmail);
+      .send(sanEmail);
 
     expect(res.statusCode).toBeGreaterThanOrEqual(400);
   });
 
-  it('âŒ devrait refuser si mot de passe est manquant', async () => {
-    const { password, ...withoutPassword } = validClient;
+  it('doit refuser si mot de passe est manquant', async () => {
+    const { password, ...sanPassword } = clientValide;
     const res = await request(app)
       .post('/api/auth/register')
-      .send(withoutPassword);
+      .send(sanPassword);
 
     expect(res.statusCode).toBeGreaterThanOrEqual(400);
   });
 
-  it('âŒ devrait refuser un mot de passe trop court (< 6 caractÃ¨res)', async () => {
+  it('doit refuser un mot de passe inferieur a 6 caracteres', async () => {
     const res = await request(app)
       .post('/api/auth/register')
-      .send({ ...validClient, password: '123' });
+      .send({ ...clientValide, password: '123' });
 
     expect(res.statusCode).toBeGreaterThanOrEqual(400);
   });
 
-  it('âŒ devrait refuser un email avec format invalide', async () => {
+  it('doit refuser un email avec un format invalide', async () => {
     const res = await request(app)
       .post('/api/auth/register')
-      .send({ ...validClient, email: 'not-an-email' });
+      .send({ ...clientValide, email: 'pas-un-email' });
 
     expect(res.statusCode).toBeGreaterThanOrEqual(400);
   });
+
 });
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// =============================================================================
 // 2. POST /api/auth/login
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// =============================================================================
 
 describe('POST /api/auth/login', () => {
 
   beforeEach(async () => {
-    // Register a user before each login test
-    await request(app).post('/api/auth/register').send(validClient);
+    await request(app).post('/api/auth/register').send(clientValide);
   });
 
-  it('âœ… devrait connecter un utilisateur avec des identifiants valides', async () => {
+  it('devrait connecter un utilisateur avec des identifiants valides', async () => {
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: validClient.email, password: validClient.password });
+      .send({ email: clientValide.email, password: clientValide.password });
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('token');
     expect(res.body).toHaveProperty('user');
-    expect(res.body.user.email).toBe(validClient.email);
+    expect(res.body.user.email).toBe(clientValide.email);
     expect(res.body.message).toMatch(/successful/i);
   });
 
-  it('âœ… le token retournÃ© doit Ãªtre un JWT valide', async () => {
+  it('le token retourne doit etre un JWT valide', async () => {
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: validClient.email, password: validClient.password });
+      .send({ email: clientValide.email, password: clientValide.password });
 
     expect(res.statusCode).toBe(200);
     expect(res.body.token.split('.')).toHaveLength(3);
   });
 
-  it('âœ… la rÃ©ponse ne doit pas contenir le mot de passe', async () => {
+  it('la reponse ne doit pas contenir le mot de passe', async () => {
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: validClient.email, password: validClient.password });
+      .send({ email: clientValide.email, password: clientValide.password });
 
     expect(res.statusCode).toBe(200);
     expect(res.body.user).not.toHaveProperty('password');
   });
 
-  it('âŒ devrait refuser avec un email incorrect', async () => {
+  it('doit refuser avec un email incorrect', async () => {
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'wrong@email.com', password: validClient.password });
+      .send({ email: 'mauvais@email.com', password: clientValide.password });
 
     expect(res.statusCode).toBe(401);
     expect(res.body.message).toMatch(/invalid credentials/i);
   });
 
-  it('âŒ devrait refuser avec un mot de passe incorrect', async () => {
+  it('doit refuser avec un mot de passe incorrect', async () => {
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: validClient.email, password: 'wrongpassword' });
+      .send({ email: clientValide.email, password: 'mauvaispassword' });
 
     expect(res.statusCode).toBe(401);
     expect(res.body.message).toMatch(/invalid credentials/i);
   });
 
-  it('âŒ devrait refuser si email est manquant', async () => {
+  it('doit refuser si email est manquant', async () => {
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ password: validClient.password });
+      .send({ password: clientValide.password });
 
     expect(res.statusCode).toBeGreaterThanOrEqual(400);
   });
 
-  it('âŒ devrait refuser si mot de passe est manquant', async () => {
+  it('doit refuser si mot de passe est manquant', async () => {
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: validClient.email });
+      .send({ email: clientValide.email });
 
     expect(res.statusCode).toBeGreaterThanOrEqual(400);
   });
 
-  it('âŒ devrait refuser un compte bloquÃ©', async () => {
-    // Block the user directly in DB
+  it('doit refuser un compte bloque par l administrateur', async () => {
     const User = (await import('../models/User.js')).default;
     await User.findOneAndUpdate(
-      { email: validClient.email },
+      { email: clientValide.email },
       { isBlocked: true }
     );
 
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: validClient.email, password: validClient.password });
+      .send({ email: clientValide.email, password: clientValide.password });
 
     expect(res.statusCode).toBe(403);
     expect(res.body.message).toMatch(/blocked/i);
   });
+
 });
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// =============================================================================
 // 3. GET /api/auth/me
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// =============================================================================
 
 describe('GET /api/auth/me', () => {
 
   let token;
 
   beforeEach(async () => {
-    // Register + login to get token
     const res = await request(app)
       .post('/api/auth/register')
-      .send(validClient);
+      .send(clientValide);
     token = res.body.token;
   });
 
-  it('âœ… devrait retourner le profil de l\'utilisateur connectÃ©', async () => {
+  it('devrait retourner le profil de l utilisateur connecte', async () => {
     const res = await request(app)
       .get('/api/auth/me')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('user');
-    expect(res.body.user.email).toBe(validClient.email);
-    expect(res.body.user.name).toBe(validClient.name);
+    expect(res.body.user.email).toBe(clientValide.email);
+    expect(res.body.user.name).toBe(clientValide.name);
   });
 
-  it('âœ… le profil ne doit pas exposer le mot de passe', async () => {
+  it('le profil ne doit pas exposer le mot de passe', async () => {
     const res = await request(app)
       .get('/api/auth/me')
       .set('Authorization', `Bearer ${token}`);
@@ -278,13 +281,13 @@ describe('GET /api/auth/me', () => {
     expect(res.body.user).not.toHaveProperty('password');
   });
 
-  it('âŒ devrait refuser sans token Authorization', async () => {
+  it('doit refuser si aucun token Authorization n est fourni', async () => {
     const res = await request(app).get('/api/auth/me');
 
     expect(res.statusCode).toBe(401);
   });
 
-  it('âŒ devrait refuser avec un token invalide', async () => {
+  it('doit refuser avec un token invalide', async () => {
     const res = await request(app)
       .get('/api/auth/me')
       .set('Authorization', 'Bearer token.faux.invalide');
@@ -292,11 +295,12 @@ describe('GET /api/auth/me', () => {
     expect(res.statusCode).toBe(401);
   });
 
-  it('âŒ devrait refuser avec un token expirÃ© ou malformÃ©', async () => {
+  it('doit refuser avec un token malformed', async () => {
     const res = await request(app)
       .get('/api/auth/me')
       .set('Authorization', 'Bearer eyJhbGciOiJIUzI1NiJ9.invalide.invalide');
 
     expect(res.statusCode).toBe(401);
   });
+
 });
