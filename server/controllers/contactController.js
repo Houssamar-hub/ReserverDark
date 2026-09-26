@@ -103,8 +103,8 @@ export const submitContactMessage = async (req, res) => {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Origin': 'http://localhost:5173',
-          'Referer': 'http://localhost:5173/'
+          'Origin': process.env.CLIENT_URL || 'http://localhost:5173',
+          'Referer': (process.env.CLIENT_URL || 'http://localhost:5173') + '/'
         },
         body: JSON.stringify({
           name,
