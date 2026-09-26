@@ -3,12 +3,14 @@ import { Server } from 'socket.io';
 let io = null;
 
 export const initializeSocket = (server) => {
+  const allowedOrigins = process.env.NODE_ENV === 'production'
+    ? (process.env.CLIENT_URL || '').split(',').map(u => u.trim()).filter(Boolean)
+    : (process.env.ALLOWED_ORIGINS || 'http://localhost:5173').split(',').map(u => u.trim()).filter(Boolean);
+
   try {
     io = new Server(server, {
       cors: {
-        origin: process.env.NODE_ENV === 'production' 
-          ? (process.env.CLIENT_URL || 'https://yourdomain.com')
-          : ['http://localhost:5173', 'http://localhost:3000'],
+        origin: allowedOrigins,
         credentials: true,
         methods: ['GET', 'POST', 'PATCH', 'DELETE'],
       },
