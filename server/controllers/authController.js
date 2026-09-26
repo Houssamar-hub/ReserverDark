@@ -3,7 +3,8 @@ import jwt from 'jsonwebtoken';
 
 // Generate JWT Token
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+  const secret = process.env.JWT_SECRET || 'reserverdark_default_jwt_secret_key';
+  return jwt.sign({ id }, secret, {
     expiresIn: process.env.JWT_EXPIRE || '7d',
   });
 };

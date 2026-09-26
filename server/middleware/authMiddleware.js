@@ -9,7 +9,8 @@ export const authenticateUser = async (req, res, next) => {
       return res.status(401).json({ message: 'No token, authorization denied' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const secret = process.env.JWT_SECRET || 'reserverdark_default_jwt_secret_key';
+    const decoded = jwt.verify(token, secret);
     const user = await User.findById(decoded.id).select('-password');
 
     if (!user) {
@@ -31,7 +32,8 @@ export const optionalAuth = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const secret = process.env.JWT_SECRET || 'reserverdark_default_jwt_secret_key';
+      const decoded = jwt.verify(token, secret);
       const user = await User.findById(decoded.id).select('-password');
       if (user && !user.isBlocked) {
         req.user = user;
