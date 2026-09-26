@@ -41,7 +41,7 @@ export const SocketProvider = ({ children }) => {
     });
 
     newSocket.on('connect', () => {
-      console.log('⚡ Socket connected to server:', newSocket.id);
+      console.log(' Socket connected to server:', newSocket.id);
       setIsConnected(true);
 
       // Join user specific room
@@ -54,13 +54,13 @@ export const SocketProvider = ({ children }) => {
     });
 
     newSocket.on('disconnect', () => {
-      console.log('⚡ Socket disconnected');
+      console.log(' Socket disconnected');
       setIsConnected(false);
     });
 
     // Real-time new booking listener
     newSocket.on('booking:new', (booking) => {
-      console.log('🔔 [Real-time] New booking received:', booking);
+      console.log(' [Real-time] New booking received:', booking);
 
       // Notify all registered listeners
       listenersRef.current.onBookingNew.forEach(cb => {
@@ -81,7 +81,7 @@ export const SocketProvider = ({ children }) => {
           className="flex items-center gap-3 cursor-pointer group select-none w-full p-1"
         >
           <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white text-lg flex-shrink-0 shadow-md group-hover:scale-110 transition-transform">
-            🛎️
+            
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
@@ -102,7 +102,7 @@ export const SocketProvider = ({ children }) => {
 
     // Real-time booking status update listener
     newSocket.on('booking:updated', (booking) => {
-      console.log('🔄 [Real-time] Booking updated:', booking);
+      console.log(' [Real-time] Booking updated:', booking);
 
       // Notify all registered listeners
       listenersRef.current.onBookingUpdated.forEach(cb => {
@@ -111,11 +111,11 @@ export const SocketProvider = ({ children }) => {
 
       const propTitle = booking.property?.title || 'votre réservation';
       const statusText = booking.status === 'confirmed' 
-        ? 'confirmée ✅' 
+        ? 'confirmée ' 
         : booking.status === 'rejected' 
-        ? 'rejetée ❌' 
+        ? 'rejetée ' 
         : booking.status === 'cancelled'
-        ? 'annulée ⚠️'
+        ? 'annulée '
         : 'mise à jour';
 
       const targetPath = user.role === 'owner' 
@@ -133,7 +133,7 @@ export const SocketProvider = ({ children }) => {
           className="flex items-center gap-3 cursor-pointer group select-none w-full p-1"
         >
           <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white text-lg flex-shrink-0 shadow-md group-hover:scale-110 transition-transform">
-            📅
+            
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
@@ -154,7 +154,7 @@ export const SocketProvider = ({ children }) => {
 
     // Real-time notification listener
     newSocket.on('notification:new', (notification) => {
-      console.log('📫 [Real-time] Notification:', notification);
+      console.log(' [Real-time] Notification:', notification);
       if (addNotification) {
         addNotification(notification);
       }

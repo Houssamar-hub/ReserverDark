@@ -10,15 +10,15 @@ const server = http.createServer(app);
 // Initialize Socket.io
 try {
   initializeSocket(server);
-  console.log('🔌 Socket.io initialized');
+  console.log(' Socket.io initialized');
 } catch (error) {
-  console.log('⚠️ Socket.io not initialized:', error.message);
+  console.log(' Socket.io not initialized:', error.message);
 }
 
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📍 http://localhost:${PORT}`);
+  console.log(` Server running on port ${PORT}`);
+  console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(` http://localhost:${PORT}`);
 });
 
 // Handle unhandled promise rejections

@@ -16,7 +16,7 @@ export async function restoreSnapshot(customUri) {
 
     const snapshotPath = path.join(__dirname, '..', 'data', 'database_snapshot.json');
     if (!fs.existsSync(snapshotPath)) {
-      console.log('⚠️ No snapshot file found at:', snapshotPath);
+      console.log(' No snapshot file found at:', snapshotPath);
       return;
     }
 
@@ -53,13 +53,13 @@ export async function restoreSnapshot(customUri) {
       const currentCount = await col.countDocuments();
       if (currentCount === 0) {
         await col.insertMany(transformedDocs);
-        console.log(`✅ Restored ${transformedDocs.length} documents into "${colName}"`);
+        console.log(` Restored ${transformedDocs.length} documents into "${colName}"`);
       } else {
-        console.log(`ℹ️ Collection "${colName}" already has ${currentCount} documents. Skipping.`);
+        console.log(`ℹ Collection "${colName}" already has ${currentCount} documents. Skipping.`);
       }
     }
 
-    console.log('\n🎉 Database restore completed successfully!');
+    console.log('\n Database restore completed successfully!');
   } catch (error) {
     console.error('Error during snapshot restore:', error);
   }

@@ -116,9 +116,9 @@ async function run() {
         fs.copyFileSync(item.src, path.join(serverUploadsDir, item.filename));
         fs.copyFileSync(item.src, path.join(clientUploadsDir, item.filename));
         fs.copyFileSync(item.src, path.join(clientImagesDir, item.filename));
-        console.log(`✅ Copied ${item.filename}`);
+        console.log(` Copied ${item.filename}`);
       } else {
-        console.warn(`⚠️ Source file not found: ${item.src}`);
+        console.warn(` Source file not found: ${item.src}`);
       }
     }
 
@@ -148,7 +148,7 @@ async function run() {
         existing.status = 'approved';
         existing.owner = owner._id;
         await existing.save();
-        console.log(`🔄 Updated: ${existing.title}`);
+        console.log(` Updated: ${existing.title}`);
       } else {
         const prop = await Property.create({
           owner: owner._id,
@@ -167,15 +167,15 @@ async function run() {
           status: 'approved',
           averageRating: data.averageRating,
         });
-        console.log(`✨ Created: "${prop.title}" (${prop.city} - ${prop.pricePerNight} MAD/nuit) owned by ${owner.name}`);
+        console.log(` Created: "${prop.title}" (${prop.city} - ${prop.pricePerNight} MAD/nuit) owned by ${owner.name}`);
       }
     }
 
-    console.log('🎉 Successfully added all 5 properties!');
+    console.log(' Successfully added all 5 properties!');
     await mongoose.disconnect();
     process.exit(0);
   } catch (err) {
-    console.error('❌ Error:', err);
+    console.error(' Error:', err);
     process.exit(1);
   }
 }

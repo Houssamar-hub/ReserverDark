@@ -365,7 +365,7 @@ export const generateReportPdf = ({ user, stats, bookings }) => {
         </div>
         <div style="display: flex; gap: 8px;">
           <button class="btn-print" onclick="window.print()">
-            🖨️ Enregistrer / Imprimer en PDF
+             Enregistrer / Imprimer en PDF
           </button>
           <button class="btn-close" onclick="window.close()">
             Fermer

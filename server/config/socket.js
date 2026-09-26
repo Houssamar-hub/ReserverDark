@@ -16,14 +16,14 @@ export const initializeSocket = (server) => {
     });
 
     io.on('connection', (socket) => {
-      console.log('🔌 Client connected:', socket.id);
+      console.log(' Client connected:', socket.id);
 
       // Join personal user room
       socket.on('join_user', (userId) => {
         if (userId) {
           const room = `user:${userId}`;
           socket.join(room);
-          console.log(`👤 Socket ${socket.id} joined room ${room}`);
+          console.log(` Socket ${socket.id} joined room ${room}`);
         }
       });
 
@@ -32,7 +32,7 @@ export const initializeSocket = (server) => {
         if (role) {
           const room = `role:${role}`;
           socket.join(room);
-          console.log(`🛡️ Socket ${socket.id} joined role ${room}`);
+          console.log(` Socket ${socket.id} joined role ${room}`);
         }
       });
 
@@ -44,7 +44,7 @@ export const initializeSocket = (server) => {
       });
 
       socket.on('disconnect', () => {
-        console.log('🔌 Client disconnected:', socket.id);
+        console.log(' Client disconnected:', socket.id);
       });
 
       // Ping-Pong for keep-alive

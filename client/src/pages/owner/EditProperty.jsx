@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -620,7 +620,7 @@ export default function EditProperty() {
 
                     {index === 0 && (
                       <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-600 text-white shadow">
-                        ★ Couverture
+                         Couverture
                       </span>
                     )}
                   </div>
