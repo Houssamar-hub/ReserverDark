@@ -33,7 +33,7 @@ async function exportSnapshot() {
     const outputPath = path.join(dataDir, 'database_snapshot.json');
     fs.writeFileSync(outputPath, JSON.stringify(snapshot, null, 2), 'utf-8');
 
-    console.log(`\n🎉 Successfully saved database snapshot to: ${outputPath}`);
+    console.log(`\n Successfully saved database snapshot to: ${outputPath}`);
     process.exit(0);
   } catch (error) {
     console.error('Error exporting snapshot:', error);

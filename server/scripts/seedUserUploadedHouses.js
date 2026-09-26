@@ -114,9 +114,9 @@ async function seedProperties() {
       const dest = path.join(uploadsDir, item.filename);
       if (fs.existsSync(item.src)) {
         fs.copyFileSync(item.src, dest);
-        console.log(`✅ Copied image to: ${dest}`);
+        console.log(` Copied image to: ${dest}`);
       } else {
-        console.warn(`⚠️ Source file not found: ${item.src}`);
+        console.warn(` Source file not found: ${item.src}`);
       }
     }
 
@@ -127,7 +127,7 @@ async function seedProperties() {
     }
 
     if (!owners || owners.length === 0) {
-      console.error('❌ No existing user accounts found in database.');
+      console.error(' No existing user accounts found in database.');
       process.exit(1);
     }
 
@@ -156,7 +156,7 @@ async function seedProperties() {
         existing.status = 'approved';
         existing.owner = owner._id;
         await existing.save();
-        console.log(`🔄 Updated property: "${existing.title}" owned by ${owner.name}`);
+        console.log(` Updated property: "${existing.title}" owned by ${owner.name}`);
         createdProps.push(existing);
       } else {
         const prop = await Property.create({
@@ -176,16 +176,16 @@ async function seedProperties() {
           status: 'approved',
           averageRating: data.averageRating,
         });
-        console.log(`✨ Created new property: "${prop.title}" (${prop.city} - ${prop.pricePerNight} MAD/nuit) owned by ${owner.name}`);
+        console.log(` Created new property: "${prop.title}" (${prop.city} - ${prop.pricePerNight} MAD/nuit) owned by ${owner.name}`);
         createdProps.push(prop);
       }
     }
 
-    console.log(`\n🎉 Successfully registered all ${createdProps.length} houses with existing owner accounts!`);
+    console.log(`\n Successfully registered all ${createdProps.length} houses with existing owner accounts!`);
     await mongoose.disconnect();
     process.exit(0);
   } catch (err) {
-    console.error('❌ Error during property seed:', err);
+    console.error(' Error during property seed:', err);
     process.exit(1);
   }
 }

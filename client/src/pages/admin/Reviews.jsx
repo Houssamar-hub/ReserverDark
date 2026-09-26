@@ -1,3 +1,3 @@
-﻿export default function AdminReviews() {
+export default function AdminReviews() {
   return <div>AdminReviews</div>;
 }

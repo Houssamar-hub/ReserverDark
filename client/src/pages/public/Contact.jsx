@@ -48,7 +48,7 @@ export default function Contact() {
 
   const handleDirectWhatsApp = () => {
     if (!form.name.trim() || !form.message.trim()) {
-      toast('Veuillez au moins renseigner votre nom et votre message', { icon: 'ℹ️' });
+      toast('Veuillez au moins renseigner votre nom et votre message', { icon: 'ℹ' });
     }
     const url = createWhatsAppUrl(form);
     window.open(url, '_blank');
@@ -56,7 +56,7 @@ export default function Contact() {
 
   const handleDirectGmail = () => {
     if (!form.name.trim() || !form.message.trim()) {
-      toast('Veuillez au moins renseigner votre nom et votre message', { icon: 'ℹ️' });
+      toast('Veuillez au moins renseigner votre nom et votre message', { icon: 'ℹ' });
     }
     const url = createGmailWebUrl(form);
     window.open(url, '_blank');

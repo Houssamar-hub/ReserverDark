@@ -1,3 +1,3 @@
-﻿export default function Owners() {
+export default function Owners() {
   return <div>Owners</div>;
 }

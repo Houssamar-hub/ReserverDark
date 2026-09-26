@@ -303,7 +303,7 @@ export default function AdminDashboard() {
                       {b.property?.title || 'Logement'}
                     </p>
                     <p className="text-xs mt-0.5 flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
-                      <span>👤 {b.client?.name || 'Client'} ({b.client?.email || ''})</span>
+                      <span> {b.client?.name || 'Client'} ({b.client?.email || ''})</span>
                     </p>
                   </div>
                 </div>
