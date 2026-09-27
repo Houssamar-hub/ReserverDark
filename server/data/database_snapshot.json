@@ -1,6 +1,19 @@
 {
   "users": [
     {
+      "_id": "6ab7f24d84ddaf97506c811f",
+      "name": "Admin ReserverDark",
+      "email": "admin@reserverdark.com",
+      "password": "$2a$12$u3oMyPJIWRV8DK49zuSaZeuYJX6e2.3irFBddkUgqsp0mZimlfqmu",
+      "phone": "+212600000000",
+      "avatar": "",
+      "role": "admin",
+      "isBlocked": false,
+      "createdAt": "2026-09-26T16:26:53.134Z",
+      "updatedAt": "2026-09-26T16:26:59.151Z",
+      "__v": 0
+    },
+    {
       "_id": "6a85dabb19396d1b88d0f321",
       "name": "Duis quia ipsum ull",
       "email": "xibuziloc@mailinatorcom",
