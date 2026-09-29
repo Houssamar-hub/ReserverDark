@@ -288,19 +288,6 @@ cd server
 npm install
 ```
 
-Créez un fichier `.env` dans le dossier `server/` :
-```env
-PORT=5000
-NODE_ENV=development
-MONGO_URI=mongodb://localhost:27017/reserverdark
-JWT_SECRET=votre_cle_secrete_jwt_tres_longue_et_securisee
-JWT_EXPIRE=30d
-
-# Cloudinary (optionnel pour upload réel)
-CLOUDINARY_CLOUD_NAME=votre_cloud_name
-CLOUDINARY_API_KEY=votre_api_key
-CLOUDINARY_API_SECRET=votre_api_secret
-```
 
 Lancer le serveur :
 ```bash
@@ -312,12 +299,6 @@ Dans un nouveau terminal :
 ```bash
 cd client
 npm install
-```
-
-Créez un fichier `.env` dans le dossier `client/` :
-```env
-VITE_API_URL=http://localhost:5000/api
-VITE_SOCKET_URL=http://localhost:5000
 ```
 
 Lancer le client Vite :
