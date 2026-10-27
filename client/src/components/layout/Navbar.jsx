@@ -6,7 +6,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useNotifications } from "../../context/NotificationContext";
 import {
   Sun, Moon, LogOut, Menu, X, LayoutDashboard,
-  ChevronDown, Home, Bell, CheckCheck, ExternalLink
+  ChevronDown, Home, Bell, CheckCheck, ExternalLink, Sparkles
 } from "lucide-react";
 
 const LANGS = [
@@ -48,6 +48,7 @@ const Navbar = ({ onToggleSidebar, isSidebarOpen }) => {
   const navLinks = [
     { to: "/",           label: t("nav.home") || "Accueil" },
     { to: "/properties", label: t("nav.properties") },
+    { to: "/ai-assistant", label: t("nav.aiAssistant") || "Assistant IA", isAi: true },
     { to: "/about",      label: t("nav.about") },
     { to: "/contact",    label: t("nav.contact") },
   ];
@@ -120,16 +121,19 @@ const Navbar = ({ onToggleSidebar, isSidebarOpen }) => {
 
           {/* Desktop & Tablet nav */}
           <div className="hidden md:flex items-center gap-4 lg:gap-7">
-            {navLinks.map(({ to, label }) => (
+            {navLinks.map(({ to, label, isAi }) => (
               <Link key={to} to={to}
-                className="text-xs lg:text-sm font-medium transition-colors relative group whitespace-nowrap"
-                style={{ color: "var(--text-muted)" }}
-                onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"}
-                onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>
+                className={`text-xs lg:text-sm font-medium transition-all relative group whitespace-nowrap flex items-center gap-1.5 ${
+                  isAi ? "px-2.5 py-1 rounded-full text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/60 shadow-sm" : ""
+                }`}
+                style={!isAi ? { color: "var(--text-muted)" } : undefined}
+                onMouseEnter={e => { if (!isAi) e.currentTarget.style.color = "var(--accent)"; }}
+                onMouseLeave={e => { if (!isAi) e.currentTarget.style.color = "var(--text-muted)"; }}>
+                {isAi && <Sparkles className="w-3.5 h-3.5 text-indigo-500 animate-pulse" />}
                 {label}
               </Link>
             ))}
-            {user && (
+{user && (
               <Link to={dashboardPath}
                 className="flex items-center gap-1.5 text-xs lg:text-sm font-medium transition-colors whitespace-nowrap"
                 style={{ color: "var(--text-muted)" }}
