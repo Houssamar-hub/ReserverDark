@@ -46,6 +46,12 @@ export const aiService = {
     const res = await api.get('/ai/status');
     return res.data;
   },
+
+  // Configure Gemini API key dynamically
+  configureKey: async ({ apiKey, model }) => {
+    const res = await api.post('/ai/configure-key', { apiKey, model });
+    return res.data;
+  },
 };
 
 export default aiService;
