@@ -63,6 +63,9 @@ export default function AiAssistant() {
   const [properties, setProperties] = useState([]);
   const [explanations, setExplanations] = useState([]);
   const [providerStatus, setProviderStatus] = useState(null);
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const [customApiKey, setCustomApiKey] = useState(() => localStorage.getItem('reserverdark_gemini_key') || '');
+  const [keySaveMessage, setKeySaveMessage] = useState('');
 
   // Modals state
   const [selectedForCompare, setSelectedForCompare] = useState([]);
@@ -93,15 +96,39 @@ export default function AiAssistant() {
       },
     ]);
 
-    // Check backend provider status
+    // Check backend provider status or auto-configure saved key
+    const savedKey = localStorage.getItem('reserverdark_gemini_key');
+    if (savedKey) {
+      aiService.configureKey({ apiKey: savedKey })
+        .then(res => setProviderStatus(res.status))
+        .catch(() => {});
+    }
+
     aiService.getStatus()
       .then(status => setProviderStatus(status))
-      .catch(() => setProviderStatus({ isConfigured: false, model: 'Offline / Fallback' }));
+      .catch(() => setProviderStatus({ isConfigured: false, model: 'Offline / Hybrid' }));
   }, [i18n.language]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
+
+  const handleSaveApiKey = async (e) => {
+    e?.preventDefault();
+    if (!customApiKey.trim()) return;
+    try {
+      const res = await aiService.configureKey({ apiKey: customApiKey.trim() });
+      localStorage.setItem('reserverdark_gemini_key', customApiKey.trim());
+      setProviderStatus(res.status);
+      setKeySaveMessage('Clé Google Gemini activée avec succès !');
+      setTimeout(() => {
+        setApiKeyModalOpen(false);
+        setKeySaveMessage('');
+      }, 1200);
+    } catch (err) {
+      setKeySaveMessage('Erreur lors de la configuration.');
+    }
+  };
 
   const handleSendMessage = async (customText) => {
     const textToSend = (customText || input).trim();
@@ -121,6 +148,7 @@ export default function AiAssistant() {
       const response = await aiService.chat({
         message: textToSend,
         sessionId,
+        apiKey: customApiKey || undefined,
       });
 
       // Update state
