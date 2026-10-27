@@ -21,7 +21,8 @@
     "owners": "Owners",
     "reports": "Reports",
     "settings": "Settings",
-    "reviews": "Reviews"
+    "reviews": "Reviews",
+    "aiAssistant": "AI Assistant"
   },
   "home": {
     "hero": {
@@ -42,9 +43,18 @@
     },
     "howItWorks": "How it works",
     "steps": {
-      "search": { "title": "Search", "desc": "Find your perfect property" },
-      "book": { "title": "Book", "desc": "Reserve in a few clicks" },
-      "enjoy": { "title": "Enjoy", "desc": "Welcome and relax" }
+      "search": {
+        "title": "Search",
+        "desc": "Find your perfect property"
+      },
+      "book": {
+        "title": "Book",
+        "desc": "Reserve in a few clicks"
+      },
+      "enjoy": {
+        "title": "Enjoy",
+        "desc": "Welcome and relax"
+      }
     }
   },
   "auth": {
@@ -130,5 +140,21 @@
     "fr": "Français",
     "en": "English",
     "ar": "العربية"
+  },
+  "ai": {
+    "title": "ReserverDark AI",
+    "subtitle": "Your Smart Real Estate Assistant",
+    "promptPlaceholder": "Ex: I need an apartment for rent in Beni Mellal under 2500 DH...",
+    "send": "Send",
+    "reset": "New search",
+    "compare": "Compare",
+    "budget": "Calculate Budget",
+    "riskCheck": "Check Safety",
+    "whyMatch": "Why does this property match?",
+    "verifiedFacts": "Verified database facts",
+    "unknownInfo": "To verify with owner",
+    "alternatives": "Alternative suggestions",
+    "noResults": "No exact property found",
+    "activeCriteria": "Active criteria"
   }
 }
