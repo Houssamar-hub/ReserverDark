@@ -245,9 +245,20 @@ export default function AiAssistant() {
               style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
               <span className={`w-2 h-2 rounded-full ${providerStatus?.isConfigured ? 'bg-emerald-500' : 'bg-indigo-500'}`} />
               <span className="font-medium text-[11px]">
-                {providerStatus?.isConfigured ? `Gemma: ${providerStatus.model}` : 'Moteur Hybride Actif'}
+                {providerStatus?.isConfigured ? `Gemini Actif: ${providerStatus.model || '2.0 Flash'}` : 'Moteur Hybride + Météo Live'}
               </span>
             </div>
+
+            {/* Configure Key Button */}
+            <button
+              onClick={() => setApiKeyModalOpen(true)}
+              className="px-3 py-1.5 rounded-xl border text-xs font-semibold hover:bg-gray-100 dark:hover:bg-white/10 transition-colors flex items-center gap-1.5"
+              style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+              title="Configurer la clé Google Gemini API"
+            >
+              <Key className="w-3.5 h-3.5 text-amber-500" />
+              <span className="hidden sm:inline">{providerStatus?.isConfigured ? 'Clé Active' : 'Activer Gemini'}</span>
+            </button>
 
             {/* Reset button */}
             <button
@@ -487,6 +498,86 @@ export default function AiAssistant() {
           onClose={() => setRiskModalProperty(null)}
           property={riskModalProperty}
         />
+
+        {/* Gemini API Key Configuration Modal */}
+        {apiKeyModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+            <div className="w-full max-w-md p-6 rounded-3xl border shadow-2xl space-y-4"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="p-2 rounded-xl bg-amber-500/10 text-amber-500">
+                    <Key className="w-5 h-5" />
+                  </span>
+                  <h3 className="text-lg font-bold">Activer Google Gemini AI</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setApiKeyModalOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Collez votre clé API Google Gemini pour débloquer l’intelligence artificielle conversationnelle complète (Darija, météo en direct, culture marocaine, réponses intelligentes à tout).
+              </p>
+
+              <form onSubmit={handleSaveApiKey} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold mb-1.5">
+                    Clé API Gemini (Google AI Studio) :
+                  </label>
+                  <input
+                    type="password"
+                    value={customApiKey}
+                    onChange={(e) => setCustomApiKey(e.target.value)}
+                    placeholder="AIzaSy..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                  />
+                </div>
+
+                <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/40 text-xs text-indigo-700 dark:text-indigo-300 flex items-center justify-between">
+                  <span>Obtenez une clé 100% gratuite sans carte bancaire :</span>
+                  <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="ml-2 font-bold underline flex items-center gap-1 shrink-0 text-indigo-600 dark:text-indigo-400"
+                  >
+                    Obtenir <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+
+                {keySaveMessage && (
+                  <p className={`text-xs font-semibold text-center ${keySaveMessage.includes('succès') ? 'text-emerald-500' : 'text-red-500'}`}>
+                    {keySaveMessage}
+                  </p>
+                )}
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setApiKeyModalOpen(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold border hover:bg-gray-100 dark:hover:bg-white/5"
+                    style={{ borderColor: 'var(--border)' }}
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!customApiKey.trim()}
+                    className="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white shadow-sm transition-all"
+                  >
+                    Enregistrer et Activer
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
