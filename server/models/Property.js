@@ -24,6 +24,11 @@ const propertySchema = new mongoose.Schema(
       enum: ['Appartement', 'Villa', 'Maison', 'Studio', 'Chambre', 'Riad', 'Autre'],
       required: true,
     },
+    listingType: {
+      type: String,
+      enum: ['rent', 'sale'],
+      default: 'rent',
+    },
     pricePerNight: {
       type: Number,
       required: [true, 'Price per night is required'],
