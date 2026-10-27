@@ -16,6 +16,9 @@ import {
   Bot,
   User,
   CheckCircle,
+  Key,
+  ExternalLink,
+  X,
 } from 'lucide-react';
 import aiService from '../../services/aiService';
 import AiPropertyCard from '../../components/ai/AiPropertyCard';
@@ -25,28 +28,28 @@ import ListingRiskModal from '../../components/ai/ListingRiskModal';
 
 const EXAMPLE_PROMPTS = [
   {
-    lang: '🇲🇦 Darija',
+    lang: '🌤️ Taqs / Météo Live',
+    text: 'Kifach dayr ta9ss f Beni Mellal lyouma?',
+  },
+  {
+    lang: '🇲🇦 Darija Recherche',
     text: 'Bghit appartement lkra f Beni Mellal, max 2500 dh, fih juj dyal lbitat.',
   },
   {
-    lang: '🇲🇦 Darija Refinement',
-    text: 'Wakha, khasni balcon.',
-  },
-  {
-    lang: '🇲🇦 Darija Budget',
-    text: 'Khlli budget 3000.',
+    lang: '🇲🇦 Darija Conseil',
+    text: 'Chhal kaydir lkra f Beni Mellal o kifach dayra l-mdina?',
   },
   {
     lang: '🇲🇦 العربية',
-    text: 'بغيت ستوديو للكراء قريب من الجامعة وبثمن مناسب.',
+    text: 'بغيت ستوديو للكراء قريب من الجامعة فبني ملال وبثمن مناسب.',
   },
   {
     lang: '🇫🇷 Français',
-    text: 'Je cherche une maison à vendre à Casablanca avec trois chambres.',
+    text: 'Quels sont les frais de notaire et la caution pour louer au Maroc ?',
   },
   {
     lang: '🇬🇧 English',
-    text: 'I need an apartment for rent with two bedrooms and a balcony.',
+    text: 'I need an apartment for rent in Casablanca Maarif with two bedrooms.',
   },
 ];
 
