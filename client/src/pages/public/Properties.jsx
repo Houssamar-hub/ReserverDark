@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, X, RotateCcw, Check } from 'lucide-react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { Search, SlidersHorizontal, X, RotateCcw, Check, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import PropertyCard from '../../components/property/PropertyCard';
 import Spinner from '../../components/common/Spinner';
 import api from '../../services/api';
 
-const CITIES = ['Casablanca', 'Marrakech', 'Rabat', 'Agadir', 'Fès', 'Tanger', 'Ifrane', 'Meknès', 'Oujda', 'Tétouan', 'Essaouira'];
+const CITIES = ['Beni Mellal', 'Casablanca', 'Marrakech', 'Rabat', 'Agadir', 'Fès', 'Tanger', 'Ifrane', 'Meknès', 'Oujda', 'Tétouan', 'Essaouira'];
 const PROPERTY_TYPES = ['Appartement', 'Villa', 'Maison', 'Studio', 'Riad'];
 const AMENITIES = ['WiFi', 'Piscine', 'Climatisation', 'Cuisine', 'Parking', 'Jardin'];
 
