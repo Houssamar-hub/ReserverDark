@@ -21,7 +21,8 @@
     "owners": "Propriétaires",
     "reports": "Rapports",
     "settings": "Paramètres",
-    "reviews": "Avis"
+    "reviews": "Avis",
+    "aiAssistant": "Assistant IA"
   },
   "home": {
     "hero": {
@@ -42,9 +43,18 @@
     },
     "howItWorks": "Comment ça marche",
     "steps": {
-      "search": { "title": "Recherchez", "desc": "Trouvez le logement parfait" },
-      "book": { "title": "Réservez", "desc": "Réservez en quelques clics" },
-      "enjoy": { "title": "Profitez", "desc": "Bienvenue et détendez-vous" }
+      "search": {
+        "title": "Recherchez",
+        "desc": "Trouvez le logement parfait"
+      },
+      "book": {
+        "title": "Réservez",
+        "desc": "Réservez en quelques clics"
+      },
+      "enjoy": {
+        "title": "Profitez",
+        "desc": "Bienvenue et détendez-vous"
+      }
     }
   },
   "auth": {
@@ -130,5 +140,21 @@
     "fr": "Français",
     "en": "English",
     "ar": "العربية"
+  },
+  "ai": {
+    "title": "ReserverDark AI",
+    "subtitle": "Votre Assistant Immobilier Intelligent",
+    "promptPlaceholder": "Ex: Bghit appartement lkra f Beni Mellal max 2500 dh...",
+    "send": "Envoyer",
+    "reset": "Nouvelle recherche",
+    "compare": "Comparer",
+    "budget": "Calculer le budget",
+    "riskCheck": "Vérifier la sécurité",
+    "whyMatch": "Pourquoi ce logement vous correspond ?",
+    "verifiedFacts": "Faits certifiés base de données",
+    "unknownInfo": "À vérifier avec le bailleur",
+    "alternatives": "Suggestions alternatives",
+    "noResults": "Aucun logement exact trouvé",
+    "activeCriteria": "Critères actifs"
   }
 }
