@@ -13,6 +13,7 @@ import Properties from '../pages/public/Properties';
 import PropertyDetails from '../pages/public/PropertyDetails';
 import About from '../pages/public/About';
 import Contact from '../pages/public/Contact';
+import AiAssistant from '../pages/public/AiAssistant';
 
 // Auth Pages
 import Login from '../pages/auth/Login';
@@ -62,6 +63,8 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/properties" element={<Properties />} />
         <Route path="/properties/:id" element={<PropertyDetails />} />
+        <Route path="/ai-assistant" element={<AiAssistant />} />
+        <Route path="/assistant" element={<AiAssistant />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
       </Route>
