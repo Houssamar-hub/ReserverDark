@@ -28,27 +28,31 @@ import ListingRiskModal from '../../components/ai/ListingRiskModal';
 
 const EXAMPLE_PROMPTS = [
   {
-    lang: '🌤️ Taqs / Météo Live',
-    text: 'Kifach dayr ta9ss f Beni Mellal lyouma?',
-  },
-  {
-    lang: '🇲🇦 Darija Recherche',
+    lang: '🇲🇦 كراء بني ملال',
     text: 'Bghit appartement lkra f Beni Mellal, max 2500 dh, fih juj dyal lbitat.',
   },
   {
-    lang: '🇲🇦 Darija Conseil',
+    lang: '🇲🇦 كازا معاريف',
+    text: 'Bghit studio meublé f Casablanca Maarif b taman mzyan.',
+  },
+  {
+    lang: '🇲🇦 نصيحة كراء',
     text: 'Chhal kaydir lkra f Beni Mellal o kifach dayra l-mdina?',
   },
   {
-    lang: '🇲🇦 العربية',
-    text: 'بغيت ستوديو للكراء قريب من الجامعة فبني ملال وبثمن مناسب.',
+    lang: '🇲🇦 مراكش فيلا',
+    text: 'Bghit villa b piscine f Marrakech l l3otla.',
   },
   {
-    lang: '🇫🇷 Français',
+    lang: '🇲🇦 العربية',
+    text: 'بغيت شقة للكراء قريبة من البحر فطنجة وبميزانية مناسبة.',
+  },
+  {
+    lang: '🇫🇷 Conseils Notaire',
     text: 'Quels sont les frais de notaire et la caution pour louer au Maroc ?',
   },
   {
-    lang: '🇬🇧 English',
+    lang: '🇬🇧 Rent Casablanca',
     text: 'I need an apartment for rent in Casablanca Maarif with two bedrooms.',
   },
 ];
@@ -83,10 +87,10 @@ export default function AiAssistant() {
 
     // Initial greeting message
     const initialGreeting = i18n.language === 'ar'
-      ? 'مرحباً بك في ReserverDark AI! أنا مساعدك الذكي المتخصص في العقارات بالمغرب. يمكنك سؤالي بالدارجة، العربية، الفرنسية أو الإنجليزية، وسأبحث لك عن أفضل العقارات الحقيقية المطابقة لاحتياجاتك.'
+      ? 'مرحباً بك في ReserverDark AI! أنا مستشارك الذكي المتخصص في العقارات والديار بالمغرب. سأطرح عليك أسئلة وأبحث لك عن أفضل الشقق، المنازل والفيلات المطابقة لطلبك في قاعدة البيانات الحقيقية.'
       : i18n.language === 'fr'
-      ? 'Bonjour ! Je suis l’assistant intelligent de ReserverDark. Posez-moi votre recherche en Darija, Français, Arabe ou Anglais : je recherche en direct dans notre base de données certifiée et je vous explique chaque correspondance.'
-      : 'Hello! I am your ReserverDark Smart Assistant. Search in Darija, French, Arabic, or English: I find matching real database properties and explain why they suit your needs.';
+      ? 'Bonjour ! Je suis votre conseiller immobilier ReserverDark. Je vous accompagne pas à pas pour trouver votre logement idéal au Maroc (appartements, villas, studios, démarches et quartiers).'
+      : 'Hello! I am your ReserverDark Real Estate Advisor. I ask you the right questions and help you find your ideal property in Morocco (apartments, houses, villas, studios) across verified database listings.';
 
     setMessages([
       {
@@ -109,9 +113,7 @@ export default function AiAssistant() {
       .catch(() => setProviderStatus({ isConfigured: false, model: 'Offline / Hybrid' }));
   }, [i18n.language]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
+  // Auto-scrolling on messages/loading removed as requested (prevents viewport jump on question)
 
   const handleSaveApiKey = async (e) => {
     e?.preventDefault();
