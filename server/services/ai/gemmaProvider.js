@@ -1,22 +1,19 @@
 /**
  * @file gemmaProvider.js
- * @description Provider integration for Google Gemma 4 via the Gemini API.
- * 
- * NOTE ON HOSTED GEMMA API:
- * Gemma weights are open models developed by Google DeepMind.
- * Using Gemma via the Gemini API provides cloud-hosted, managed inference
- * without requiring local GPUs or hardware installations.
+ * @description Provider integration for Google Gemini API (gemini-flash-latest)
+ * using the official Google REST endpoint and SDK.
  */
+
+import dotenv from 'dotenv';
+dotenv.config();
 
 import { GoogleGenAI } from '@google/genai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 class GemmaProvider {
   constructor() {
-    this.apiKey = process.env.GEMMA_API_KEY || process.env.GEMINI_API_KEY || '';
-    // Model identifier: configurable via GEMMA_MODEL / GEMINI_MODEL env var
-    // Default: 'gemini-2.0-flash' or 'gemma-4-26b-a4b-it'
-    this.modelName = process.env.GEMMA_MODEL || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+    this.configuredKey = '';
+    this.modelName = process.env.GEMINI_MODEL || process.env.GEMMA_MODEL || 'gemini-flash-latest';
     this.timeoutMs = parseInt(process.env.GEMMA_TIMEOUT_MS, 10) || 15000;
     this.clientGenAI = null;
     this.legacyClient = null;
@@ -24,15 +21,20 @@ class GemmaProvider {
     this._initClients();
   }
 
+  get key() {
+    return this.configuredKey || process.env.GEMINI_API_KEY || process.env.GEMMA_API_KEY || '';
+  }
+
   _initClients() {
-    if (this.apiKey) {
+    const key = this.key;
+    if (key) {
       try {
-        this.clientGenAI = new GoogleGenAI({ apiKey: this.apiKey });
+        this.clientGenAI = new GoogleGenAI({ apiKey: key });
       } catch (err) {
-        console.warn('⚠️ Could not initialize @google/genai, fallback available:', err.message);
+        console.warn('⚠️ Could not initialize @google/genai, REST endpoint available:', err.message);
       }
       try {
-        this.legacyClient = new GoogleGenerativeAI(this.apiKey);
+        this.legacyClient = new GoogleGenerativeAI(key);
       } catch (err) {
         console.warn('⚠️ Could not initialize @google/generative-ai:', err.message);
       }
@@ -44,7 +46,7 @@ class GemmaProvider {
    */
   configureKey(key) {
     if (!key || typeof key !== 'string') return;
-    this.apiKey = key.trim();
+    this.configuredKey = key.trim();
     this._initClients();
   }
 
@@ -55,62 +57,104 @@ class GemmaProvider {
     return {
       provider: 'Google Gemma via Gemini API',
       model: this.modelName,
-      isConfigured: Boolean(this.apiKey),
+      endpoint: `https://generativelanguage.googleapis.com/v1beta/models/${this.modelName}:generateContent`,
+      isConfigured: Boolean(this.key),
       isHostedApi: true,
       requiresLocalGpu: false,
-      sdk: '@google/genai',
+      authHeader: 'X-goog-api-key',
     };
   }
 
   /**
-   * Generate text using Gemma
+   * Generate text using Gemini API
+   * Uses verified endpoint: https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent
+   * Header: X-goog-api-key: {GEMINI_API_KEY}
    */
-  async generateText({ systemInstruction, prompt }) {
-    if (!this.apiKey) {
-      const err = new Error('GEMMA_API_KEY is not configured in backend environment.');
+  async generateText({ systemInstruction, prompt, history = [] }) {
+    if (process.env.NODE_ENV === 'test' && !process.env.TEST_LIVE_AI) {
+      const err = new Error('Test mode: using offline engine');
+      err.code = 'TEST_OFFLINE';
+      throw err;
+    }
+
+    const key = this.key;
+    if (!key) {
+      const err = new Error('GEMINI_API_KEY is not configured in backend environment.');
       err.code = 'API_KEY_MISSING';
       err.status = 503;
       throw err;
     }
 
-    const candidateModels = [
-      this.modelName,
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
-      'gemini-1.5-pro',
-      'gemma-2-9b-it',
-    ];
+    const candidateModels = Array.from(
+      new Set([
+        this.modelName,
+        'gemini-flash-latest',
+        'gemini-flash-lite-latest',
+        'gemini-3.5-flash',
+        'gemini-3.8-flash',
+      ])
+    );
 
     let lastError = null;
 
     for (const modelId of candidateModels) {
       try {
-        // Primary: @google/genai SDK
-        if (this.clientGenAI) {
-          const response = await this.clientGenAI.models.generateContent({
-            model: modelId,
-            contents: prompt,
-            config: {
-              systemInstruction: systemInstruction || undefined,
-              temperature: 0.3,
-            },
-          });
-          if (response?.text) return response.text;
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent`;
+
+        const contents = [];
+        if (history && history.length > 0) {
+          for (const msg of history.slice(-6)) {
+            contents.push({
+              role: msg.role === 'user' ? 'user' : 'model',
+              parts: [{ text: msg.content }],
+            });
+          }
+        }
+        contents.push({
+          role: 'user',
+          parts: [{ text: prompt }],
+        });
+
+        const requestBody = { contents };
+        if (systemInstruction) {
+          requestBody.systemInstruction = {
+            parts: [{ text: systemInstruction }],
+          };
         }
 
-        // Secondary: @google/generative-ai SDK
-        if (this.legacyClient) {
-          const model = this.legacyClient.getGenerativeModel({
-            model: modelId,
-            systemInstruction,
-          });
-          const result = await model.generateContent(prompt);
-          const txt = result?.response?.text();
-          if (txt) return txt;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs || 15000);
+
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-goog-api-key': key,
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const data = await res.json();
+
+        if (res.status === 200 && data.candidates && data.candidates[0]?.content?.parts) {
+          return data.candidates[0].content.parts.map(p => p.text).join('\n').trim();
+        }
+
+        if (data.error) {
+          // If 503 high demand spike or 404, fallback to next available flash model
+          if (data.error.code === 503 || data.error.code === 404) {
+            console.warn(`Model ${modelId} returned ${data.error.code}, cascading to next model...`);
+            lastError = new Error(data.error.message);
+            continue;
+          }
+          throw new Error(data.error.message || 'Gemini API Error');
         }
       } catch (err) {
         lastError = err;
-        console.warn(`⚠️ Model ${modelId} failed, trying next candidate:`, err.message);
+        console.warn(`Model ${modelId} error:`, err.message);
       }
     }
 
