@@ -12,6 +12,7 @@ import { compareProperties } from '../services/ai/comparisonService.js';
 import { calculateHousingBudget } from '../services/ai/budgetAdvisor.js';
 import { analyzeListingRisk } from '../services/ai/listingRiskService.js';
 import { generateConversationalResponse } from '../services/ai/conversationalAdvisor.js';
+import { generateGeneralResponse } from '../services/ai/generalAiAdvisor.js';
 import conversationMemory from '../services/ai/conversationMemory.js';
 import {
   chatRequestSchema,
@@ -48,6 +49,27 @@ export const handleAiChat = async (req, res, next) => {
 
     // 1. Extract criteria (using previous session criteria for cumulative refinement)
     const extracted = await extractSearchCriteria(message, session.criteria);
+
+    // Check if the previous assistant message was an interview/onboarding asking for housing criteria
+    const historyWithoutCurrent = (session.history || []).slice(0, -1);
+    const lastAssistantMsg = historyWithoutCurrent.slice().reverse().find(m => m.role === 'assistant');
+    const wasInterviewPrompt = Boolean(
+      lastAssistantMsg && (
+        lastAssistantMsg.content.includes('نطرح عليك الأسئلة') ||
+        lastAssistantMsg.content.includes('questions essentielles') ||
+        lastAssistantMsg.content.includes('4 quick questions') ||
+        lastAssistantMsg.content.includes('إينا مدينة') ||
+        lastAssistantMsg.content.includes('chmen mdina')
+      )
+    );
+
+    const isUserSayingThatsAll = /\b(o\s*cfy|cfy|o\s*safi|safi|c['’]?est\s*tout|that['’]?s\s*all|baraka|khalas)\b/i.test(message);
+
+    // If user is answering an interview prompt, treat as search refinement
+    const isGeneralDomain = ['weather', 'programming', 'mathematics', 'translation', 'sports'].includes(extracted.intent);
+    if (wasInterviewPrompt && !isGeneralDomain && extracted.intent !== 'user_correction' && extracted.intent !== 'greeting') {
+      extracted.intent = 'search';
+    }
 
     // If user indicates a correction or objection ("ba9i ma3titkch achno baghi", "rak zrebty"), wipe accidental filters
     if (extracted.intent === 'user_correction') {
@@ -86,8 +108,56 @@ export const handleAiChat = async (req, res, next) => {
       });
     }
 
-    // Conversational intents (Greetings, small-talk, Moroccan real estate advice, city info, general Q&A, interview, corrections, call check-ins)
-    const conversationalIntents = [
+    // Mixed intent: general question + real-estate search in same turn
+    if (extracted.intent === 'mixed') {
+      const generalExplanation = await generateGeneralResponse({
+        userMessage: message,
+        intent: 'general_qa',
+        detectedLanguage: extracted.detectedLanguage,
+        history: session.history || [],
+      });
+
+      const searchResult = await searchAndRankProperties(cumulativeCriteria, { limit: 4, allowAlternatives: true });
+      const explanations = await generateMatchExplanations(
+        searchResult.properties,
+        cumulativeCriteria,
+        extracted.detectedLanguage
+      );
+
+      const locationName = cumulativeCriteria.city || (extracted.detectedLanguage === 'darija' ? 'Beni Mellal' : 'la ville demandée');
+      const propertyIntro = extracted.detectedLanguage === 'darija'
+        ? `\n\n---\n\n🏠 **L-3aqarat li tlbti f ${locationName}:**\nL9ayt lik ${searchResult.count} 3aqar f la base de données kaynasbo talab dyalek:`
+        : `\n\n---\n\n🏠 **Logements demandés à ${locationName} :**\nVoici ${searchResult.count} bien(s) vérifié(s) correspondant à votre recherche :`;
+
+      const fullReply = `${generalExplanation}${propertyIntro}`;
+      conversationMemory.appendMessage(session.id, 'assistant', fullReply);
+
+      const safeProperties = searchResult.properties.map(item => ({
+        ...item.property,
+        score: item.score,
+        isAlternative: item.isAlternative,
+        relaxedReasons: item.relaxedReasons || [],
+      }));
+
+      return res.status(200).json({
+        success: true,
+        sessionId: session.id,
+        reply: fullReply,
+        criteria: cumulativeCriteria,
+        properties: safeProperties,
+        explanations,
+        totalMatches: searchResult.count,
+        intent: 'mixed',
+      });
+    }
+
+    // Conversational & General AI intents (Programming, Math, Weather, Translation, Sports, Chit-chat, etc.)
+    const generalIntents = [
+      'weather',
+      'programming',
+      'mathematics',
+      'translation',
+      'sports',
       'greeting',
       'identity',
       'chitchat',
@@ -102,19 +172,19 @@ export const handleAiChat = async (req, res, next) => {
       'ping_allo',
     ];
 
-    if (conversationalIntents.includes(extracted.intent)) {
-      const conversationalReply = await generateConversationalResponse({
+    if (generalIntents.includes(extracted.intent)) {
+      const generalReply = await generateGeneralResponse({
         userMessage: message,
         intent: extracted.intent,
         detectedLanguage: extracted.detectedLanguage,
         history: session.history || [],
       });
 
-      conversationMemory.appendMessage(session.id, 'assistant', conversationalReply);
+      conversationMemory.appendMessage(session.id, 'assistant', generalReply);
       return res.status(200).json({
         success: true,
         sessionId: session.id,
-        reply: conversationalReply,
+        reply: generalReply,
         criteria: cumulativeCriteria,
         properties: [],
         explanations: [],
@@ -148,10 +218,20 @@ export const handleAiChat = async (req, res, next) => {
       });
     }
 
-    // Verify whether actual search filters are present (requires at least a city or explicit national search)
+    // Verify whether actual search filters are present (city, amenity, propertyType, budget, bedrooms, or coastal search)
     const hasActiveFilters = Boolean(
-      (cumulativeCriteria.city && (cumulativeCriteria.propertyType || cumulativeCriteria.maxPrice || cumulativeCriteria.minBedrooms || cumulativeCriteria.transactionType)) ||
-      (cumulativeCriteria.city && /\b(bghit|khasni|cherche|rent|sale|lkra|lbi3)\b/i.test(message))
+      (cumulativeCriteria.city && (cumulativeCriteria.propertyType || cumulativeCriteria.maxPrice || cumulativeCriteria.minPrice || cumulativeCriteria.minBedrooms || cumulativeCriteria.transactionType)) ||
+      (cumulativeCriteria.city && /\b(bghit|khasni|cherche|rent|sale|lkra|lbi3)\b/i.test(message)) ||
+      (cumulativeCriteria.amenities && cumulativeCriteria.amenities.length > 0) ||
+      cumulativeCriteria.propertyType ||
+      cumulativeCriteria.maxPrice ||
+      cumulativeCriteria.minPrice ||
+      cumulativeCriteria.minGuests ||
+      cumulativeCriteria.sortPreference === 'price_asc' ||
+      cumulativeCriteria.minBedrooms ||
+      wasInterviewPrompt ||
+      isUserSayingThatsAll ||
+      /\b(b[7h][ae]r|lb[7h][ae]r|bahr|mer|beach|plage|piscine|pool|ocean)\b/i.test(message)
     );
 
     // If intent was search but no filters were provided, do not dump 100 properties: ask clarification like a human
@@ -189,12 +269,47 @@ export const handleAiChat = async (req, res, next) => {
     const locationName = cumulativeCriteria.city || (lang === 'darija' ? 'l-Meghrib' : 'le Maroc');
 
     if (searchResult.count > 0) {
+      const isSeaSearch = cumulativeCriteria.amenities && cumulativeCriteria.amenities.includes('Vue sur mer');
+      const isCheapSearch = cumulativeCriteria.sortPreference === 'price_asc' && !cumulativeCriteria.minPrice && !cumulativeCriteria.maxPrice;
+      const isMinPrice = Boolean(cumulativeCriteria.minPrice);
+      const isMaxPrice = Boolean(cumulativeCriteria.maxPrice);
+
       if (lang === 'darija') {
-        reply = `Wakha 3la rass o l-3ayn! 9ellabt lik f ${locationName} o l9ayt ${searchResult.count} 3aqar kaynasbo talab dyalek b daqqa:`;
+        if (isMinPrice && !cumulativeCriteria.city) {
+          reply = `Wakha 3la rass o l-3ayn! 9ellabt lik f l-Meghrib o l9ayt ${searchResult.count} 3aqar ktar mn ${cumulativeCriteria.minPrice} DH kaynasbo talab dyalek b daqqa:`;
+        } else if (isMaxPrice && !cumulativeCriteria.city) {
+          reply = `Wakha 3la rass o l-3ayn! 9ellabt lik f l-Meghrib o l9ayt ${searchResult.count} 3aqar a9al mn ${cumulativeCriteria.maxPrice} DH kaynasbo talab dyalek b daqqa:`;
+        } else if (isSeaSearch && !cumulativeCriteria.city) {
+          reply = `Wakha 3la rass o l-3ayn! Ha homa ${searchResult.count} 3aqar kaynin 3la lb7ar o 3ndhom vue sur mer f modon sa7iliya (Tanger, Casablanca, Agadir, Essaouira):`;
+        } else if (isCheapSearch && !cumulativeCriteria.city) {
+          reply = `Wakha 3la rass o l-3ayn! Ha homa a7san l-3aqarat l-i9tisadiya o r-rkhissa f la base de données (bda men ${searchResult.properties[0]?.property?.pricePerNight || 240} DH/lila):`;
+        } else {
+          reply = `Wakha 3la rass o l-3ayn! 9ellabt lik f ${locationName} o l9ayt ${searchResult.count} 3aqar kaynasbo talab dyalek b daqqa:`;
+        }
       } else if (lang === 'ar') {
-        reply = `على الرحب والسعة! لقد بحثت لك في ${locationName} ووجدت ${searchResult.count} عقار يطابق طلبك بدقة:`;
+        if (isMinPrice && !cumulativeCriteria.city) {
+          reply = `على الرحب والسعة! لقد بحثت في المغرب ووجدت ${searchResult.count} عقار بسعر أكثر من ${cumulativeCriteria.minPrice} درهم:`;
+        } else if (isMaxPrice && !cumulativeCriteria.city) {
+          reply = `على الرحب والسعة! لقد بحثت في المغرب ووجدت ${searchResult.count} عقار بسعر أقل من ${cumulativeCriteria.maxPrice} درهم:`;
+        } else if (isSeaSearch && !cumulativeCriteria.city) {
+          reply = `على الرحب والسعة! إليك ${searchResult.count} عقار قرب البحر وإطلالة بحرية رائعة في مدن ساحلية (طنجة، الدار البيضاء، أكادير، الصويرة):`;
+        } else if (isCheapSearch && !cumulativeCriteria.city) {
+          reply = `على الرحب والسعة! إليك أرخص وأفضل العقارات الاقتصادية في قاعدة البيانات (ابتداءً من ${searchResult.properties[0]?.property?.pricePerNight || 240} درهم/ليلة):`;
+        } else {
+          reply = `على الرحب والسعة! لقد بحثت لك في ${locationName} ووجدت ${searchResult.count} عقار يطابق طلبك بدقة:`;
+        }
       } else if (lang === 'fr') {
-        reply = `C'est tout trouvé ! J'ai déniché ${searchResult.count} bien(s) correspondant exactement à vos critères à ${locationName} :`;
+        if (isMinPrice && !cumulativeCriteria.city) {
+          reply = `J'ai trouvé ${searchResult.count} bien(s) à plus de ${cumulativeCriteria.minPrice} DH correspondant à votre recherche :`;
+        } else if (isMaxPrice && !cumulativeCriteria.city) {
+          reply = `J'ai trouvé ${searchResult.count} bien(s) à moins de ${cumulativeCriteria.maxPrice} DH correspondant à votre recherche :`;
+        } else if (isSeaSearch && !cumulativeCriteria.city) {
+          reply = `Avec grand plaisir ! Voici ${searchResult.count} bien(s) en front de mer avec vue imprenable sur l'océan (Tanger, Casablanca, Agadir, Essaouira) :`;
+        } else if (isCheapSearch && !cumulativeCriteria.city) {
+          reply = `Avec grand plaisir ! Voici notre sélection de logements économiques et accessibles (à partir de ${searchResult.properties[0]?.property?.pricePerNight || 240} DH/nuit) :`;
+        } else {
+          reply = `C'est tout trouvé ! J'ai déniché ${searchResult.count} bien(s) correspondant exactement à vos critères à ${locationName} :`;
+        }
       } else {
         reply = `I found ${searchResult.count} property/properties matching your criteria in ${locationName}:`;
       }
